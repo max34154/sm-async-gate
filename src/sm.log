@@ -1,0 +1,706 @@
+13964( 13548) 08/03/2021 19:05:20  RTE I Connected to Oracle Version 12.2.0.1.0
+ 13964( 13548) 08/03/2021 19:05:20  RTE I Oracle Client version: 12.1.0.2.0
+ 13964( 13548) 08/03/2021 19:05:20  RTE I Oracle server settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF8)
+ 13964( 13548) 08/03/2021 19:05:20  RTE I OCI Client settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF16)
+ 13964( 13548) 08/03/2021 19:05:20  RTE I Oracle instance setting for NLS_SORT is set to BINARY_CI
+ 13964( 13548) 08/03/2021 19:05:20  RTE I Oracle instance setting for NLS_COMP is set to LINGUISTIC
+ 13964( 13548) 08/03/2021 19:05:20  RTE I Oracle session is set up in CASE INSENSITIVE mode
+ 13964( 13548) 08/03/2021 19:05:20  RTE I Thread DAOThread - max initialization done. Thread 23 of 50.
+ 13964( 13548) 08/03/2021 19:05:20  RTE I Total sessions since process began: 79374
+ 13964( 15920) 08/03/2021 19:05:20  RTE E EVP_CipherFinal_ex failed in desDecryptWithAES256CBC()
+ 13964( 15920) 08/03/2021 19:05:20  RTE E [OPENSSL] error:0606506D:digital envelope routines:EVP_DecryptFinal_ex:wrong final block length
+ 13964( 15920) 08/03/2021 19:05:20  RTE I Using "utalloc" memory manager, mode [0]
+ 13964( 15920) 08/03/2021 19:05:20  RTE I Process sm 9.63.0006 () System: 13080 (0x61EBB600) on PC (x64 64-bit) running Windows (6.2 Build 9200) Timezone GMT+03:00 Locale ru_RU from Is43-SM-APP02T
+ 13964( 15920) 08/03/2021 19:05:20  RTE I Host network address: 172.16.52.88
+ 13964( 15920) 08/03/2021 19:05:20  RTE I Thread attaching to resources with key 0x61EBB600
+ 13964( 15920) 08/03/2021 19:05:20  RTE D sqociConnect: sqociConnect - OCIServerDetach()
+ 13964( 15920) 08/03/2021 19:05:20  RTE D sql diff 0.000  total 0.000  call#:1 --> sqociConnect:sqociConnect - OCIServerDetach()
+ 13964( 15920) 08/03/2021 19:05:20  RTE D sqociConnect: SERVER ATTACH
+ 13964( 15920) 08/03/2021 19:05:20  RTE D sql diff 0.031  total 0.031  call#:2 --> sqociConnect:SERVER ATTACH
+ 13964( 15920) 08/03/2021 19:05:20  RTE D sqociConnect: BEGIN SESSION
+ 13964( 15920) 08/03/2021 19:05:20  RTE D sql diff 0.032  total 0.063  call#:3 --> sqociConnect:BEGIN SESSION
+ 13964( 15920) 08/03/2021 19:05:20  RTE I Connection to dbtype 'oracle10' Oracle server 'SMTST' as user 'SM' successful
+ 13964( 15920) 08/03/2021 19:05:20  RTE I Connected to Oracle Version 12.2.0.1.0
+ 13964( 15920) 08/03/2021 19:05:20  RTE I Oracle Client version: 12.1.0.2.0
+ 13964( 15920) 08/03/2021 19:05:20  RTE I Oracle server settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF8)
+ 13964( 15920) 08/03/2021 19:05:20  RTE I OCI Client settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF16)
+ 13964( 15920) 08/03/2021 19:05:20  RTE I Oracle instance setting for NLS_SORT is set to BINARY_CI
+ 13964( 15920) 08/03/2021 19:05:20  RTE I Oracle instance setting for NLS_COMP is set to LINGUISTIC
+ 13964( 15920) 08/03/2021 19:05:20  RTE I Oracle session is set up in CASE INSENSITIVE mode
+ 13964( 15920) 08/03/2021 19:05:20  RTE I Thread DAOThread - max initialization done. Thread 24 of 50.
+ 13964( 15920) 08/03/2021 19:05:20  RTE I Total sessions since process began: 79375
+ 13964(  8540) 08/03/2021 19:05:20  RTE E EVP_CipherFinal_ex failed in desDecryptWithAES256CBC()
+ 13964(  8540) 08/03/2021 19:05:20  RTE E [OPENSSL] error:0606506D:digital envelope routines:EVP_DecryptFinal_ex:wrong final block length
+ 13964(  8540) 08/03/2021 19:05:20  RTE I Using "utalloc" memory manager, mode [0]
+ 13964(  8540) 08/03/2021 19:05:20  RTE I Process sm 9.63.0006 () System: 13080 (0x61EBB600) on PC (x64 64-bit) running Windows (6.2 Build 9200) Timezone GMT+03:00 Locale ru_RU from Is43-SM-APP02T
+ 13964(  8540) 08/03/2021 19:05:20  RTE I Host network address: 172.16.52.88
+ 13964(  8540) 08/03/2021 19:05:20  RTE I Thread attaching to resources with key 0x61EBB600
+ 13964(  8540) 08/03/2021 19:05:20  RTE D sqociConnect: sqociConnect - OCIServerDetach()
+ 13964(  8540) 08/03/2021 19:05:20  RTE D sql diff 0.000  total 0.000  call#:1 --> sqociConnect:sqociConnect - OCIServerDetach()
+ 13964(  8540) 08/03/2021 19:05:20  RTE D sqociConnect: SERVER ATTACH
+ 13964(  8540) 08/03/2021 19:05:20  RTE D sql diff 0.047  total 0.047  call#:2 --> sqociConnect:SERVER ATTACH
+ 13964(  8540) 08/03/2021 19:05:20  RTE D sqociConnect: BEGIN SESSION
+ 13964(  8540) 08/03/2021 19:05:20  RTE D sql diff 0.031  total 0.078  call#:3 --> sqociConnect:BEGIN SESSION
+ 13964(  8540) 08/03/2021 19:05:20  RTE I Connection to dbtype 'oracle10' Oracle server 'SMTST' as user 'SM' successful
+ 13964(  8540) 08/03/2021 19:05:20  RTE I Connected to Oracle Version 12.2.0.1.0
+ 13964(  8540) 08/03/2021 19:05:20  RTE I Oracle Client version: 12.1.0.2.0
+ 13964(  8540) 08/03/2021 19:05:20  RTE I Oracle server settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF8)
+ 13964(  8540) 08/03/2021 19:05:20  RTE I OCI Client settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF16)
+ 13964(  8540) 08/03/2021 19:05:20  RTE I Oracle instance setting for NLS_SORT is set to BINARY_CI
+ 13964(  8540) 08/03/2021 19:05:20  RTE I Oracle instance setting for NLS_COMP is set to LINGUISTIC
+ 13964(  8540) 08/03/2021 19:05:20  RTE I Oracle session is set up in CASE INSENSITIVE mode
+ 13964(  8540) 08/03/2021 19:05:20  RTE I Thread DAOThread - max initialization done. Thread 25 of 50.
+ 13964(  8540) 08/03/2021 19:05:20  RTE I Total sessions since process began: 79376
+ 13964(  1256) 08/03/2021 19:05:20  RTE E EVP_CipherFinal_ex failed in desDecryptWithAES256CBC()
+ 13964(  1256) 08/03/2021 19:05:20  RTE E [OPENSSL] error:0606506D:digital envelope routines:EVP_DecryptFinal_ex:wrong final block length
+ 13964(  1256) 08/03/2021 19:05:20  RTE I Using "utalloc" memory manager, mode [0]
+ 13964(  1256) 08/03/2021 19:05:20  RTE I Process sm 9.63.0006 () System: 13080 (0x61EBB600) on PC (x64 64-bit) running Windows (6.2 Build 9200) Timezone GMT+03:00 Locale ru_RU from Is43-SM-APP02T
+ 13964(  1256) 08/03/2021 19:05:20  RTE I Host network address: 172.16.52.88
+ 13964(  1256) 08/03/2021 19:05:20  RTE I Thread attaching to resources with key 0x61EBB600
+ 13964(  1256) 08/03/2021 19:05:20  RTE D sqociConnect: sqociConnect - OCIServerDetach()
+ 13964(  1256) 08/03/2021 19:05:20  RTE D sql diff 0.016  total 0.016  call#:1 --> sqociConnect:sqociConnect - OCIServerDetach()
+ 13964(  1256) 08/03/2021 19:05:20  RTE D sqociConnect: SERVER ATTACH
+ 13964(  1256) 08/03/2021 19:05:20  RTE D sql diff 0.016  total 0.032  call#:2 --> sqociConnect:SERVER ATTACH
+ 13964(  1256) 08/03/2021 19:05:20  RTE D sqociConnect: BEGIN SESSION
+ 13964(  1256) 08/03/2021 19:05:20  RTE D sql diff 0.031  total 0.063  call#:3 --> sqociConnect:BEGIN SESSION
+ 13964(  1256) 08/03/2021 19:05:20  RTE I Connection to dbtype 'oracle10' Oracle server 'SMTST' as user 'SM' successful
+ 13964(  1256) 08/03/2021 19:05:20  RTE I Connected to Oracle Version 12.2.0.1.0
+ 13964(  1256) 08/03/2021 19:05:20  RTE I Oracle Client version: 12.1.0.2.0
+ 13964(  1256) 08/03/2021 19:05:20  RTE I Oracle server settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF8)
+ 13964(  1256) 08/03/2021 19:05:20  RTE I OCI Client settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF16)
+ 13964(  1256) 08/03/2021 19:05:20  RTE I Oracle instance setting for NLS_SORT is set to BINARY_CI
+ 13964(  1256) 08/03/2021 19:05:20  RTE I Oracle instance setting for NLS_COMP is set to LINGUISTIC
+ 13964(  1256) 08/03/2021 19:05:20  RTE I Oracle session is set up in CASE INSENSITIVE mode
+ 13964(  1256) 08/03/2021 19:05:20  RTE I Thread DAOThread - max initialization done. Thread 26 of 50.
+ 13964(  1256) 08/03/2021 19:05:20  RTE I Total sessions since process began: 79377
+ 13964( 13548) 08/03/2021 19:05:20 JRTE I GUID=fa5ffa60-f0dd-4539-9c3a-5cd06cc0ead6
+ 13964(  1256) 08/03/2021 19:05:20 JRTE I GUID=6cf2e7c1-fff6-4e13-82f1-46e063de82c5
+ 13964( 17376) 08/03/2021 19:05:20 JRTE I GUID=5be409dd-e876-46f0-944e-89863542ba58
+ 13964( 18712) 08/03/2021 19:05:20 JRTE I GUID=70b94ae8-cb28-46ed-adb9-264c295a5575
+ 13964( 15920) 08/03/2021 19:05:20 JRTE I GUID=cebeb4fe-dd88-4e2e-8378-521640eeaa10
+ 13964(   308) 08/03/2021 19:05:20 JRTE I GUID=7664150d-3cbf-4f23-a1ac-3c405c54d5a9
+ 13964( 18984) 08/03/2021 19:05:20 JRTE I GUID=85afdfc7-e2ce-4d74-8ed1-a54d3e6ea6b7
+ 13964(  4040) 08/03/2021 19:05:20 JRTE I GUID=0e81edfa-3368-44e6-8c9c-094d5629f431
+ 13964( 13548) 08/03/2021 19:05:20  RTE I User max logged in.  Already licensed
+ 13964( 13548) 08/03/2021 19:05:20  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964(  8540) 08/03/2021 19:05:20 JRTE I GUID=d775eac0-8f5a-45ee-9819-914b1825100f
+ 13964( 18712) 08/03/2021 19:05:20  RTE I User max logged in.  Already licensed
+ 13964( 18712) 08/03/2021 19:05:20  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 17808) 08/03/2021 19:05:20 JRTE I GUID=52465741-3fd7-48c6-9623-85347cdb25af
+ 13964(  4180) 08/03/2021 19:05:21 JRTE I GUID=04bae82b-cbea-4604-8457-9906a02dcfcc
+ 13964(  4040) 08/03/2021 19:05:21  RTE I User max logged in.  Already licensed
+ 13964(  4040) 08/03/2021 19:05:21  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 19484) 08/03/2021 19:05:21 JRTE I GUID=03ea85a0-4c12-425c-bdc0-3cf05622f0eb
+ 13964(  4040) 08/03/2021 19:05:21  RTE I dbUpdate: The record being updated has been modified since read
+ 13964(  4040) 08/03/2021 19:05:21  RTE I dbUpdate: file:(operator) key:(name=max)
+ 13964( 19700) 08/03/2021 19:05:21 JRTE I GUID=b65c865a-df14-423d-95b7-e085b671b9dc
+ 13964(  8540) 08/03/2021 19:05:21  RTE I User max logged in.  Already licensed
+ 13964(  8540) 08/03/2021 19:05:21  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 17808) 08/03/2021 19:05:21  RTE I User max logged in.  Already licensed
+ 13964( 17808) 08/03/2021 19:05:21  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 14280) 08/03/2021 19:05:21 JRTE I GUID=519ede50-d2f4-4559-b9b2-d84002be0b04
+ 13964( 17808) 08/03/2021 19:05:21  RTE I dbUpdate: The record being updated has been modified since read
+ 13964( 17808) 08/03/2021 19:05:21  RTE I dbUpdate: file:(operator) key:(name=max)
+ 13964(  7284) 08/03/2021 19:05:21 JRTE I GUID=898d6617-fa5f-4bfd-97b5-87b7e947feaa
+ 13964( 13548) 08/03/2021 19:05:21  RTE I -Memory : S(4634144) O(748732) MAX(5382876) - MALLOC's Total(157898)
+ 13964( 13080) 08/03/2021 19:05:21 JRTE I GUID=f65ef81b-b879-4cea-91ec-3f38c447d892
+ 13964( 15920) 08/03/2021 19:05:21  RTE I User max logged in.  Already licensed
+ 13964( 15920) 08/03/2021 19:05:21  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 15920) 08/03/2021 19:05:21  RTE I dbUpdate: The record being updated has been modified since read
+ 13964( 15920) 08/03/2021 19:05:21  RTE I dbUpdate: file:(operator) key:(name=max)
+ 13964(   308) 08/03/2021 19:05:21  RTE W WARNING: lock [3]Licensing            waited on for 407 milliseconds held by pid(13964), tid(15920) for 219 milliseconds
+ 13964(   308) 08/03/2021 19:05:21  RTE I User max logged in.  Already licensed
+ 13964(   308) 08/03/2021 19:05:21  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 18712) 08/03/2021 19:05:21  RTE I -Memory : S(4634768) O(748108) MAX(5382876) - MALLOC's Total(157907)
+ 13964(   308) 08/03/2021 19:05:21  RTE I dbUpdate: The record being updated has been modified since read
+ 13964(   308) 08/03/2021 19:05:21  RTE I dbUpdate: file:(operator) key:(name=max)
+ 13964(  8540) 08/03/2021 19:05:21  RTE I -Memory : S(4636016) O(750956) MAX(5386972) - MALLOC's Total(158006)
+ 13964(  4040) 08/03/2021 19:05:21  RTE I -Memory : S(4611040) O(730780) MAX(5341820) - MALLOC's Total(154854)
+ 13964(  4180) 08/03/2021 19:05:21  RTE W WARNING: lock [3]Licensing            waited on for 407 milliseconds held by pid(13964), tid(308) for 0 milliseconds
+ 13964(  4180) 08/03/2021 19:05:21  RTE I User max logged in.  Already licensed
+ 13964(  4180) 08/03/2021 19:05:21  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 15920) 08/03/2021 19:05:21  RTE I -Memory : S(4612912) O(737100) MAX(5350012) - MALLOC's Total(155008)
+ 13964( 17808) 08/03/2021 19:05:21  RTE I -Memory : S(4612288) O(737724) MAX(5350012) - MALLOC's Total(154953)
+ 13964(  4180) 08/03/2021 19:05:21  RTE I dbUpdate: The record being updated has been modified since read
+ 13964(  4180) 08/03/2021 19:05:21  RTE I dbUpdate: file:(operator) key:(name=max)
+ 13964(   308) 08/03/2021 19:05:21  RTE I -Memory : S(4613536) O(736476) MAX(5350012) - MALLOC's Total(155062)
+ 13964(  1256) 08/03/2021 19:05:21  RTE W WARNING: lock [3]Licensing            waited on for 516 milliseconds held by pid(13964), tid(4180) for 93 milliseconds
+ 13964(  1256) 08/03/2021 19:05:21  RTE I User max logged in.  Already licensed
+ 13964(  1256) 08/03/2021 19:05:21  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 17376) 08/03/2021 19:05:21  RTE W WARNING: lock [3]Licensing            waited on for 672 milliseconds held by pid(13964), tid(1256) for 156 milliseconds
+ 13964( 17376) 08/03/2021 19:05:21  RTE I User max logged in.  Already licensed
+ 13964( 17376) 08/03/2021 19:05:21  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964(  1256) 08/03/2021 19:05:21  RTE I dbUpdate: The record being updated has been modified since read
+ 13964(  1256) 08/03/2021 19:05:21  RTE I dbUpdate: file:(operator) key:(name=max)
+ 13964(  8540) 08/03/2021 19:05:21  RTE I Base login Response: 1.093 -- RAD: 0.000  JS: 0.313 Log:0.000 Database: 0.780(00810)  LDAP: 0.000 (CPU 0.202)  application:login,cleanup
+ 13964( 17332) 08/03/2021 19:05:21  RTE E EVP_CipherFinal_ex failed in desDecryptWithAES256CBC()
+ 13964( 17332) 08/03/2021 19:05:21  RTE E [OPENSSL] error:0606506D:digital envelope routines:EVP_DecryptFinal_ex:wrong final block length
+ 13964( 17332) 08/03/2021 19:05:21  RTE I Using "utalloc" memory manager, mode [0]
+ 13964( 17376) 08/03/2021 19:05:21  RTE I dbUpdate: The record being updated has been modified since read
+ 13964( 17376) 08/03/2021 19:05:21  RTE I dbUpdate: file:(operator) key:(name=max)
+ 13964( 18984) 08/03/2021 19:05:21  RTE W WARNING: lock [3]Licensing            waited on for 687 milliseconds held by pid(13964), tid(17376) for 16 milliseconds
+ 13964( 18984) 08/03/2021 19:05:21  RTE I User max logged in.  Already licensed
+ 13964( 18984) 08/03/2021 19:05:21  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 13548) 08/03/2021 19:05:21  RTE I Base login Response: 1.328 -- RAD: 0.000  JS: 0.484 Log:0.000 Database: 0.844(00804)  LDAP: 0.000 (CPU 0.203)  application:login,cleanup
+ 13964(  4040) 08/03/2021 19:05:21  RTE I Base login Response: 1.233 -- RAD: 0.000  JS: 0.391 Log:0.000 Database: 0.842(00804)  LDAP: 0.000 (CPU 0.218)  application:login,cleanup
+ 13964( 15920) 08/03/2021 19:05:21  RTE I Base login Response: 1.108 -- RAD: 0.000  JS: 0.281 Log:0.000 Database: 0.827(00810)  LDAP: 0.000 (CPU 0.140)  application:login,cleanup
+ 13964( 18984) 08/03/2021 19:05:22  RTE I dbUpdate: The record being updated has been modified since read
+ 13964( 18984) 08/03/2021 19:05:22  RTE I dbUpdate: file:(operator) key:(name=max)
+ 13964( 19700) 08/03/2021 19:05:22  RTE W WARNING: lock [3]Licensing            waited on for 781 milliseconds held by pid(13964), tid(18984) for 94 milliseconds
+ 13964( 19700) 08/03/2021 19:05:22  RTE I User max logged in.  Already licensed
+ 13964( 19700) 08/03/2021 19:05:22  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 19700) 08/03/2021 19:05:22  RTE I dbUpdate: The record being updated has been modified since read
+ 13964( 19700) 08/03/2021 19:05:22  RTE I dbUpdate: file:(operator) key:(name=max)
+ 13964(   308) 08/03/2021 19:05:22  RTE I Base login Response: 1.218 -- RAD: 0.032  JS: 0.483 Log:0.000 Database: 0.703(00812)  LDAP: 0.000 (CPU 0.218)  application:login,cleanup
+ 13964(  1256) 08/03/2021 19:05:22  RTE I -Memory : S(4614784) O(735228) MAX(5350012) - MALLOC's Total(155170)
+ 13964( 18712) 08/03/2021 19:05:22  RTE I Base login Response: 2.517 -- RAD: 0.000  JS: 1.111 Log:0.000 Database: 1.406(00806)  LDAP: 0.000 (CPU 0.125)  application:login,cleanup
+ 13964( 17376) 08/03/2021 19:05:22  RTE I -Memory : S(4615408) O(734604) MAX(5350012) - MALLOC's Total(155224)
+ 13964( 19484) 08/03/2021 19:05:22  RTE W WARNING: lock [3]Licensing            waited on for 1203 milliseconds held by pid(13964), tid(19700) for 188 milliseconds
+ 13964( 19484) 08/03/2021 19:05:22  RTE I User max logged in.  Already licensed
+ 13964( 19484) 08/03/2021 19:05:22  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 18984) 08/03/2021 19:05:22  RTE I -Memory : S(4616032) O(733980) MAX(5350012) - MALLOC's Total(155279)
+ 13964( 19700) 08/03/2021 19:05:22  RTE I -Memory : S(4616656) O(733356) MAX(5350012) - MALLOC's Total(155333)
+ 13964( 18984) 08/03/2021 19:05:22  RTE I Base login Response: 1.812 -- RAD: 0.437  JS: 0.327 Log:0.000 Database: 1.048(00820)  LDAP: 0.000 (CPU 0.234)  application:login,cleanup
+ 13964( 19484) 08/03/2021 19:05:22  RTE I dbUpdate: The record being updated has been modified since read
+ 13964( 19484) 08/03/2021 19:05:22  RTE I dbUpdate: file:(operator) key:(name=max)
+ 13964(  4180) 08/03/2021 19:05:22  RTE I -Memory : S(4614160) O(735852) MAX(5350012) - MALLOC's Total(155116)
+ 13964( 17376) 08/03/2021 19:05:22  RTE I Base login Response: 2.015 -- RAD: 0.158  JS: 0.516 Log:0.000 Database: 1.341(00818)  LDAP: 0.000 (CPU 0.187)  application:login,cleanup
+ 13964( 19700) 08/03/2021 19:05:22  RTE I Base login Response: 2.016 -- RAD: 0.483  JS: 0.499 Log:0.000 Database: 1.034(00822)  LDAP: 0.000 (CPU 0.171)  application:login,cleanup
+ 13964( 19484) 08/03/2021 19:05:23  RTE I -Memory : S(4617280) O(736828) MAX(5354108) - MALLOC's Total(155387)
+ 13964(  7284) 08/03/2021 19:05:23  RTE W WARNING: lock [3]Licensing            waited on for 1469 milliseconds held by pid(13964), tid(19484) for 94 milliseconds
+ 13964(  7284) 08/03/2021 19:05:23  RTE I User max logged in.  Already licensed
+ 13964(  7284) 08/03/2021 19:05:23  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 17808) 08/03/2021 19:05:23  RTE I Base login Response: 2.829 -- RAD: 0.000  JS: 1.564 Log:0.000 Database: 1.265(00808)  LDAP: 0.000 (CPU 0.249)  application:login,cleanup
+ 13964( 14280) 08/03/2021 19:05:23  RTE W WARNING: lock [3]Licensing            waited on for 1609 milliseconds held by pid(13964), tid(7284) for 203 milliseconds
+ 13964( 14280) 08/03/2021 19:05:23  RTE I User max logged in.  Already licensed
+ 13964( 14280) 08/03/2021 19:05:23  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 14280) 08/03/2021 19:05:23  RTE I dbUpdate: The record being updated has been modified since read
+ 13964( 14280) 08/03/2021 19:05:23  RTE I dbUpdate: file:(operator) key:(name=max)
+ 13964( 13080) 08/03/2021 19:05:23  RTE W WARNING: lock [3]Licensing            waited on for 1625 milliseconds held by pid(13964), tid(14280) for 16 milliseconds
+ 13964( 13080) 08/03/2021 19:05:23  RTE I User max logged in.  Already licensed
+ 13964( 13080) 08/03/2021 19:05:23  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 13080) 08/03/2021 19:05:23  RTE I dbUpdate: The record being updated has been modified since read
+ 13964( 13080) 08/03/2021 19:05:23  RTE I dbUpdate: file:(operator) key:(name=max)
+ 13964(  7284) 08/03/2021 19:05:23  RTE I -Memory : S(4642256) O(752908) MAX(5395164) - MALLOC's Total(158548)
+ 13964(  1256) 08/03/2021 19:05:23  RTE I Base login Response: 2.421 -- RAD: 0.000  JS: 1.064 Log:0.016 Database: 1.357(00816)  LDAP: 0.000 (CPU 0.327)  application:login,cleanup
+ 13964( 14280) 08/03/2021 19:05:23  RTE I -Memory : S(4618528) O(735580) MAX(5354108) - MALLOC's Total(155495)
+ 13964( 13080) 08/03/2021 19:05:23  RTE I -Memory : S(4619152) O(739052) MAX(5358204) - MALLOC's Total(155550)
+ 13964( 17332) 08/03/2021 19:05:23  RTE I Process sm 9.63.0006 () System: 13080 (0x61EBB600) on PC (x64 64-bit) running Windows (6.2 Build 9200) Timezone GMT+03:00 Locale ru_RU from Is43-SM-APP02T
+ 13964( 17332) 08/03/2021 19:05:23  RTE I Host network address: 172.16.52.88
+ 13964( 17332) 08/03/2021 19:05:23  RTE I Thread attaching to resources with key 0x61EBB600
+ 13964( 17332) 08/03/2021 19:05:23  RTE D sqociConnect: sqociConnect - OCIServerDetach()
+ 13964( 17332) 08/03/2021 19:05:23  RTE D sql diff 0.000  total 0.000  call#:1 --> sqociConnect:sqociConnect - OCIServerDetach()
+ 13964( 17332) 08/03/2021 19:05:23  RTE D sqociConnect: SERVER ATTACH
+ 13964(  7284) 08/03/2021 19:05:23  RTE I Base login Response: 2.360 -- RAD: 0.876  JS: 0.250 Log:0.000 Database: 1.234(00830)  LDAP: 0.000 (CPU 0.186)  application:login,cleanup
+ 13964( 14280) 08/03/2021 19:05:23  RTE I Base login Response: 2.578 -- RAD: 1.692  JS: 0.281 Log:0.016 Database: 0.605(00828)  LDAP: 0.000 (CPU 0.250)  application:login,cleanup
+ 13964( 13080) 08/03/2021 19:05:23  RTE I Base login Response: 2.672 -- RAD: 1.451  JS: 0.282 Log:0.000 Database: 0.939(00830)  LDAP: 0.000 (CPU 0.296)  application:login,cleanup
+ 13964(  4180) 08/03/2021 19:05:23  RTE I Base login Response: 3.047 -- RAD: 0.000  JS: 1.874 Log:0.000 Database: 1.173(00814)  LDAP: 0.000 (CPU 0.171)  application:login,cleanup
+ 13964( 17332) 08/03/2021 19:05:23  RTE D sql*diff 0.547  total 0.547  call#:2 --> sqociConnect:SERVER ATTACH
+ 13964( 19484) 08/03/2021 19:05:23  RTE I Base login Response: 3.000 -- RAD: 1.080  JS: 0.811 Log:0.000 Database: 1.109(00824)  LDAP: 0.000 (CPU 0.250)  application:login,cleanup
+ 13964( 17332) 08/03/2021 19:05:23  RTE D sqociConnect: BEGIN SESSION
+ 13964( 17332) 08/03/2021 19:05:24  RTE D sql*diff 0.750  total 1.297  call#:3 --> sqociConnect:BEGIN SESSION
+ 13964( 17332) 08/03/2021 19:05:24  RTE I Connection to dbtype 'oracle10' Oracle server 'SMTST' as user 'SM' successful
+ 13964( 17332) 08/03/2021 19:05:24  RTE I Connected to Oracle Version 12.2.0.1.0
+ 13964( 17332) 08/03/2021 19:05:24  RTE I Oracle Client version: 12.1.0.2.0
+ 13964( 17332) 08/03/2021 19:05:24  RTE I Oracle server settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF8)
+ 13964( 17332) 08/03/2021 19:05:24  RTE I OCI Client settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF16)
+ 13964( 17332) 08/03/2021 19:05:24  RTE I Oracle instance setting for NLS_SORT is set to BINARY_CI
+ 13964( 17332) 08/03/2021 19:05:24  RTE I Oracle instance setting for NLS_COMP is set to LINGUISTIC
+ 13964( 17332) 08/03/2021 19:05:24  RTE I Oracle session is set up in CASE INSENSITIVE mode
+ 13964( 17332) 08/03/2021 19:05:24  RTE I Thread DAOThread - max initialization done. Thread 27 of 50.
+ 13964( 17332) 08/03/2021 19:05:24  RTE I Total sessions since process began: 79378
+ 13964( 10652) 08/03/2021 19:05:24 JRTE I GUID=f2c7b8be-7a52-477c-b926-fb452183d00b
+ 13964( 10652) 08/03/2021 19:05:24  RTE I User max logged in.  Already licensed
+ 13964( 10652) 08/03/2021 19:05:24  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 10652) 08/03/2021 19:05:24  RTE I -Memory : S(4644128) O(751036) MAX(5395164) - MALLOC's Total(158711)
+ 13964( 18312) 08/03/2021 19:05:24 JRTE I GUID=a736d37e-f7b2-45d8-bc10-a4f8cee81907
+ 13964( 18312) 08/03/2021 19:05:25  RTE I User max logged in.  Already licensed
+ 13964( 18312) 08/03/2021 19:05:25  RTE I User max has logged in and is using a Floating license ( 4 out of a maximum 20 )
+ 13964( 10652) 08/03/2021 19:05:25  RTE I Base login Response: 0.500 -- RAD: 0.000  JS: 0.234 Log:0.000 Database: 0.266(00836)  LDAP: 0.000 (CPU 0.249)  application:login,cleanup
+ 13964( 18312) 08/03/2021 19:05:25  RTE I -Memory : S(4644752) O(754508) MAX(5399260) - MALLOC's Total(158765)
+ 13964( 18312) 08/03/2021 19:05:25  RTE I Base login Response: 0.984 -- RAD: 0.000  JS: 0.421 Log:0.000 Database: 0.563(00838)  LDAP: 0.000 (CPU 0.249)  application:login,cleanup
+ 13964( 17332) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 17332) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 17376) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 17376) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 17332) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 17332) 08/03/2021 19:05:39  RTE D Destroying DAOThread 2df49060
+ 13964( 17332) 08/03/2021 19:05:39  RTE I -Memory : S(638640) O(218764) MAX(2286940) - MALLOC's Total(3417)
+ 13964( 17332) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 18312) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 18312) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 18312) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 18312) 08/03/2021 19:05:39  RTE D Destroying DAOThread 81ae1c0
+ 13964( 18312) 08/03/2021 19:05:39  RTE I -Memory : S(4857384) O(1065364) MAX(7385148) - MALLOC's Total(2550824)
+ 13964( 18312) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 10860) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 10860) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 10860) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 10860) 08/03/2021 19:05:39  RTE D Destroying DAOThread 8603080
+ 13964( 10860) 08/03/2021 19:05:39  RTE I -Memory : S(638640) O(218764) MAX(2286940) - MALLOC's Total(3417)
+ 13964( 10860) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 17376) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 17376) 08/03/2021 19:05:39  RTE D Destroying DAOThread 7b99a2c0
+ 13964( 17376) 08/03/2021 19:05:39  RTE I -Memory : S(4828216) O(1086436) MAX(7377052) - MALLOC's Total(857988)
+ 13964( 17376) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 10860) 08/03/2021 19:05:39  RTE I sql total 0.093  call#:34 -->sqociDisconnect:OCISessionEnd
+ 13964( 17332) 08/03/2021 19:05:39  RTE I sql total 1.328  call#:34 -->sqociDisconnect:OCISessionEnd
+ 13964( 19484) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 19484) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 19484) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 19484) 08/03/2021 19:05:39  RTE D Destroying DAOThread 28093270
+ 13964( 19484) 08/03/2021 19:05:39  RTE I -Memory : S(4830088) O(1084564) MAX(7377052) - MALLOC's Total(1513972)
+ 13964( 19484) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 10860) 08/03/2021 19:05:39  RTE I sql total 0.093  call#:35 -->sqociDisconnect:OCIServerDetach
+ 13964( 10860) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:23. Threads remaining: 26 of 50
+ 13964( 18984) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 18984) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 18984) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 18984) 08/03/2021 19:05:39  RTE D Destroying DAOThread 10da8140
+ 13964( 18984) 08/03/2021 19:05:39  RTE I -Memory : S(4828840) O(1085812) MAX(7377052) - MALLOC's Total(986899)
+ 13964( 18984) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 19332) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 19332) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 19332) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 19332) 08/03/2021 19:05:39  RTE D Destroying DAOThread 438c3190
+ 13964( 19332) 08/03/2021 19:05:39  RTE I -Memory : S(3706200) O(1353700) MAX(7504092) - MALLOC's Total(11386774)
+ 13964( 19332) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 13080) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 13080) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 13080) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 13080) 08/03/2021 19:05:39  RTE D Destroying DAOThread 10a5a1e0
+ 13964( 18312) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 21 sessions remaining )
+ 13964( 13080) 08/03/2021 19:05:39  RTE I -Memory : S(4831960) O(1086788) MAX(7381148) - MALLOC's Total(1528013)
+ 13964( 13080) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 14280) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 14280) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 14280) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 18312) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964(  8540) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 14280) 08/03/2021 19:05:39  RTE D Destroying DAOThread 41e6b220
+ 13964(  8540) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964(  8540) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 14280) 08/03/2021 19:05:39  RTE I -Memory : S(4831336) O(1083316) MAX(7381148) - MALLOC's Total(1378914)
+ 13964( 14280) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964(  8540) 08/03/2021 19:05:39  RTE D Destroying DAOThread 239d5430
+ 13964( 18312) 08/03/2021 19:05:39  RTE I sql total 0.579  call#:925 -->sqociDisconnect:OCISessionEnd
+ 13964(  8540) 08/03/2021 19:05:39  RTE I -Memory : S(4848648) O(1061812) MAX(7372860) - MALLOC's Total(966873)
+ 13964(  8540) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 18312) 08/03/2021 19:05:39  RTE I sql total 0.595  call#:926 -->sqociDisconnect:OCIServerDetach
+ 13964( 18312) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:23. Threads remaining: 25 of 50
+ 13964( 18916) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 18916) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 18916) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 18916) 08/03/2021 19:05:39  RTE D Destroying DAOThread 250e1340
+ 13964( 18916) 08/03/2021 19:05:39  RTE I -Memory : S(4878440) O(1056596) MAX(7504092) - MALLOC's Total(3847146)
+ 13964( 18916) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 17376) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 20 sessions remaining )
+ 13964( 13080) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 19 sessions remaining )
+ 13964( 17376) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964( 17376) 08/03/2021 19:05:39  RTE I sql total 1.357  call#:904 -->sqociDisconnect:OCISessionEnd
+ 13964( 17376) 08/03/2021 19:05:39  RTE I sql total 1.373  call#:905 -->sqociDisconnect:OCIServerDetach
+ 13964( 17376) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:19. Threads remaining: 24 of 50
+ 13964( 13080) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964( 19700) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 19700) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 19700) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 13080) 08/03/2021 19:05:39  RTE I sql total 0.939  call#:915 -->sqociDisconnect:OCISessionEnd
+ 13964( 19700) 08/03/2021 19:05:39  RTE D Destroying DAOThread 27e89210
+ 13964( 19700) 08/03/2021 19:05:39  RTE I -Memory : S(4829464) O(1085188) MAX(7377052) - MALLOC's Total(1074357)
+ 13964( 19700) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 13080) 08/03/2021 19:05:39  RTE I sql total 0.939  call#:916 -->sqociDisconnect:OCIServerDetach
+ 13964( 13080) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:21. Threads remaining: 23 of 50
+ 13964(   308) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964(   308) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964(  6476) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964(  6476) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 14280) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 18 sessions remaining )
+ 13964( 19332) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 17 sessions remaining )
+ 13964( 14280) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964( 14280) 08/03/2021 19:05:39  RTE I sql total 0.589  call#:912 -->sqociDisconnect:OCISessionEnd
+ 13964( 14280) 08/03/2021 19:05:39  RTE I sql total 0.589  call#:913 -->sqociDisconnect:OCIServerDetach
+ 13964( 14280) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:20. Threads remaining: 22 of 50
+ 13964( 19332) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964( 19332) 08/03/2021 19:05:39  RTE I sql total 0.330  call#:949 -->sqociDisconnect:OCISessionEnd
+ 13964( 19332) 08/03/2021 19:05:39  RTE I sql total 0.330  call#:950 -->sqociDisconnect:OCIServerDetach
+ 13964( 19332) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:27. Threads remaining: 21 of 50
+ 13964( 18984) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 16 sessions remaining )
+ 13964(   308) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964(   308) 08/03/2021 19:05:39  RTE D Destroying DAOThread 36d251d0
+ 13964(   308) 08/03/2021 19:05:39  RTE I -Memory : S(4826344) O(1084212) MAX(7368860) - MALLOC's Total(1389322)
+ 13964( 18984) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964(   308) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 18984) 08/03/2021 19:05:39  RTE I sql total 1.030  call#:902 -->sqociDisconnect:OCISessionEnd
+ 13964( 18984) 08/03/2021 19:05:39  RTE I sql total 1.030  call#:903 -->sqociDisconnect:OCIServerDetach
+ 13964( 18984) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:20. Threads remaining: 20 of 50
+ 13964(  6476) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964(  6476) 08/03/2021 19:05:39  RTE D Destroying DAOThread 26901290
+ 13964(  6476) 08/03/2021 19:05:39  RTE I -Memory : S(4878472) O(1060660) MAX(7508188) - MALLOC's Total(3667853)
+ 13964(  6476) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 19484) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 15 sessions remaining )
+ 13964( 18916) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 14 sessions remaining )
+ 13964( 19484) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964( 19700) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 13 sessions remaining )
+ 13964( 18916) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964( 17332) 08/03/2021 19:05:39  RTE I sql total 1.453  call#:35 -->sqociDisconnect:OCIServerDetach
+ 13964( 18916) 08/03/2021 19:05:39  RTE I sql total 0.468  call#:898 -->sqociDisconnect:OCISessionEnd
+ 13964( 19700) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964( 17332) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:15. Threads remaining: 19 of 50
+ 13964( 19700) 08/03/2021 19:05:39  RTE I sql total 1.237  call#:901 -->sqociDisconnect:OCISessionEnd
+ 13964( 18916) 08/03/2021 19:05:39  RTE I sql total 0.468  call#:899 -->sqociDisconnect:OCIServerDetach
+ 13964( 19700) 08/03/2021 19:05:39  RTE I sql total 1.237  call#:902 -->sqociDisconnect:OCIServerDetach
+ 13964( 19700) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:20. Threads remaining: 18 of 50
+ 13964( 18916) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:22. Threads remaining: 17 of 50
+ 13964(   308) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 12 sessions remaining )
+ 13964( 19484) 08/03/2021 19:05:39  RTE I sql total 1.109  call#:905 -->sqociDisconnect:OCISessionEnd
+ 13964( 19484) 08/03/2021 19:05:39  RTE I sql total 1.109  call#:906 -->sqociDisconnect:OCIServerDetach
+ 13964(   308) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964( 19484) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:20. Threads remaining: 16 of 50
+ 13964(   308) 08/03/2021 19:05:39  RTE I sql total 0.687  call#:890 -->sqociDisconnect:OCISessionEnd
+ 13964(   308) 08/03/2021 19:05:39  RTE I sql total 0.703  call#:891 -->sqociDisconnect:OCIServerDetach
+ 13964(   308) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:19. Threads remaining: 15 of 50
+ 13964( 12556) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 12556) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 12556) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 12556) 08/03/2021 19:05:39  RTE D Destroying DAOThread 23e26140
+ 13964( 12556) 08/03/2021 19:05:39  RTE I -Memory : S(638640) O(218764) MAX(2286940) - MALLOC's Total(3417)
+ 13964( 12556) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964(  6476) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 11 sessions remaining )
+ 13964( 15920) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 15920) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 15920) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 15920) 08/03/2021 19:05:39  RTE D Destroying DAOThread 27870200
+ 13964( 15920) 08/03/2021 19:05:39  RTE I -Memory : S(4825720) O(1084836) MAX(7368860) - MALLOC's Total(1585284)
+ 13964( 15920) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964(  6476) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964(  6476) 08/03/2021 19:05:39  RTE I sql total 0.673  call#:897 -->sqociDisconnect:OCISessionEnd
+ 13964(  6476) 08/03/2021 19:05:39  RTE I sql total 0.673  call#:898 -->sqociDisconnect:OCIServerDetach
+ 13964(  6476) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:22. Threads remaining: 14 of 50
+ 13964(  1256) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964(  1256) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964(  1256) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964(  1256) 08/03/2021 19:05:39  RTE D Destroying DAOThread 36afa150
+ 13964(  1256) 08/03/2021 19:05:39  RTE I -Memory : S(4827592) O(1087060) MAX(7377052) - MALLOC's Total(1045474)
+ 13964(  1256) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 17808) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 17808) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 17808) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 17808) 08/03/2021 19:05:39  RTE D Destroying DAOThread 27ae9090
+ 13964( 17808) 08/03/2021 19:05:39  RTE I -Memory : S(4825064) O(1085492) MAX(7368860) - MALLOC's Total(1116997)
+ 13964( 17808) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 12556) 08/03/2021 19:05:39  RTE I sql total 0.140  call#:34 -->sqociDisconnect:OCISessionEnd
+ 13964( 12556) 08/03/2021 19:05:39  RTE I sql total 0.140  call#:35 -->sqociDisconnect:OCIServerDetach
+ 13964( 12556) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:23. Threads remaining: 13 of 50
+ 13964(  8540) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 10 sessions remaining )
+ 13964(  8540) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964(  4180) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964(  4180) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964(  4180) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964(  4180) 08/03/2021 19:05:39  RTE D Destroying DAOThread 7ae691e0
+ 13964(  4180) 08/03/2021 19:05:39  RTE I -Memory : S(4826968) O(1083588) MAX(7372956) - MALLOC's Total(1208215)
+ 13964(  4180) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964(  8540) 08/03/2021 19:05:39  RTE I sql total 0.780  call#:886 -->sqociDisconnect:OCISessionEnd
+ 13964(  8540) 08/03/2021 19:05:39  RTE I sql total 0.780  call#:887 -->sqociDisconnect:OCIServerDetach
+ 13964(  8540) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:19. Threads remaining: 12 of 50
+ 13964( 15920) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 9 sessions remaining )
+ 13964(  4040) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964(  4040) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964(  4040) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964(  4040) 08/03/2021 19:05:39  RTE D Destroying DAOThread 23cd1250
+ 13964(  4040) 08/03/2021 19:05:39  RTE I -Memory : S(4823848) O(1086708) MAX(7368860) - MALLOC's Total(1199839)
+ 13964(  4040) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 15920) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964(  1256) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 8 sessions remaining )
+ 13964( 15920) 08/03/2021 19:05:39  RTE I sql total 0.810  call#:885 -->sqociDisconnect:OCISessionEnd
+ 13964( 15920) 08/03/2021 19:05:39  RTE I sql total 0.826  call#:886 -->sqociDisconnect:OCIServerDetach
+ 13964( 15920) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:19. Threads remaining: 11 of 50
+ 13964( 10652) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964( 10652) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 10652) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964( 10652) 08/03/2021 19:05:39  RTE D Destroying DAOThread 275301c0
+ 13964( 10652) 08/03/2021 19:05:39  RTE I -Memory : S(4856760) O(1061892) MAX(7381052) - MALLOC's Total(2006819)
+ 13964( 10652) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964(  1256) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964(  1256) 08/03/2021 19:05:39  RTE I sql total 1.294  call#:890 -->sqociDisconnect:OCISessionEnd
+ 13964(  1256) 08/03/2021 19:05:39  RTE I sql total 1.294  call#:891 -->sqociDisconnect:OCIServerDetach
+ 13964(  1256) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:19. Threads remaining: 10 of 50
+ 13964( 17808) 08/03/2021 19:05:39  RTE I User max has logged out.  Still licensed ( 7 sessions remaining )
+ 13964( 17808) 08/03/2021 19:05:39  RTE I Undisplayed message:NOP--------------
+ 13964(  5832) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964(  5832) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964(  5832) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964(  5832) 08/03/2021 19:05:39  RTE D Destroying DAOThread 106a74e0
+ 13964(  5832) 08/03/2021 19:05:39  RTE I -Memory : S(4877416) O(1053524) MAX(7504092) - MALLOC's Total(3104097)
+ 13964(  5832) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 17808) 08/03/2021 19:05:39  RTE I sql total 1.281  call#:881 -->sqociDisconnect:OCISessionEnd
+ 13964( 17808) 08/03/2021 19:05:39  RTE I sql total 1.281  call#:882 -->sqociDisconnect:OCIServerDetach
+ 13964( 17808) 08/03/2021 19:05:39  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:19. Threads remaining: 9 of 50
+ 13964(  7284) 08/03/2021 19:05:39 JRTE I Daothread exit due to timeout:max
+ 13964(  7284) 08/03/2021 19:05:39 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964(  7284) 08/03/2021 19:05:39 JRTE I Termination signal: 0
+ 13964(  7284) 08/03/2021 19:05:39  RTE D Destroying DAOThread 23b2a190
+ 13964(  7284) 08/03/2021 19:05:39  RTE I -Memory : S(4854888) O(1063764) MAX(7381052) - MALLOC's Total(2112891)
+ 13964(  7284) 08/03/2021 19:05:39  RTE I Thread termination in progress
+ 13964( 18712) 08/03/2021 19:05:40 JRTE I Daothread exit due to timeout:max
+ 13964( 18712) 08/03/2021 19:05:40 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 18712) 08/03/2021 19:05:40 JRTE I Termination signal: 0
+ 13964( 18712) 08/03/2021 19:05:40  RTE D Destroying DAOThread 35fcf260
+ 13964( 18712) 08/03/2021 19:05:40  RTE I -Memory : S(4847400) O(1063060) MAX(7372860) - MALLOC's Total(1263456)
+ 13964( 18712) 08/03/2021 19:05:40  RTE I Thread termination in progress
+ 13964(  4040) 08/03/2021 19:05:40  RTE I User max has logged out.  Still licensed ( 6 sessions remaining )
+ 13964(  4040) 08/03/2021 19:05:40  RTE I Undisplayed message:NOP--------------
+ 13964(  4040) 08/03/2021 19:05:40  RTE I sql total 0.811  call#:876 -->sqociDisconnect:OCISessionEnd
+ 13964(  4040) 08/03/2021 19:05:40  RTE I sql total 0.811  call#:877 -->sqociDisconnect:OCIServerDetach
+ 13964(  4040) 08/03/2021 19:05:40  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:21. Threads remaining: 8 of 50
+ 13964(  4180) 08/03/2021 19:05:40  RTE I User max has logged out.  Still licensed ( 5 sessions remaining )
+ 13964(  4180) 08/03/2021 19:05:40  RTE I Undisplayed message:NOP--------------
+ 13964( 10652) 08/03/2021 19:05:40  RTE I User max has logged out.  Still licensed ( 4 sessions remaining )
+ 13964(  4180) 08/03/2021 19:05:40  RTE I sql total 1.204  call#:885 -->sqociDisconnect:OCISessionEnd
+ 13964( 10652) 08/03/2021 19:05:40  RTE I Undisplayed message:NOP--------------
+ 13964(  4180) 08/03/2021 19:05:40  RTE I sql total 1.204  call#:886 -->sqociDisconnect:OCIServerDetach
+ 13964( 10652) 08/03/2021 19:05:40  RTE I sql total 0.281  call#:906 -->sqociDisconnect:OCISessionEnd
+ 13964( 10652) 08/03/2021 19:05:40  RTE I sql total 0.281  call#:907 -->sqociDisconnect:OCIServerDetach
+ 13964(  4180) 08/03/2021 19:05:40  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:21. Threads remaining: 7 of 50
+ 13964( 10652) 08/03/2021 19:05:40  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:24. Threads remaining: 6 of 50
+ 13964( 13548) 08/03/2021 19:05:40 JRTE I Daothread exit due to timeout:max
+ 13964( 13548) 08/03/2021 19:05:40 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 13548) 08/03/2021 19:05:40 JRTE I Termination signal: 0
+ 13964( 13548) 08/03/2021 19:05:40  RTE D Destroying DAOThread 10ad91d0
+ 13964( 13548) 08/03/2021 19:05:40  RTE I -Memory : S(4846776) O(1063684) MAX(7372860) - MALLOC's Total(1172959)
+ 13964( 13548) 08/03/2021 19:05:40  RTE I Thread termination in progress
+ 13964(  7284) 08/03/2021 19:05:40  RTE I User max has logged out.  Still licensed ( 3 sessions remaining )
+ 13964(  7284) 08/03/2021 19:05:40  RTE I Undisplayed message:NOP--------------
+ 13964(  7284) 08/03/2021 19:05:40  RTE I sql total 1.078  call#:899 -->sqociDisconnect:OCISessionEnd
+ 13964( 18712) 08/03/2021 19:05:40  RTE I User max has logged out.  Still licensed ( 2 sessions remaining )
+ 13964(  7284) 08/03/2021 19:05:40  RTE I sql total 1.094  call#:900 -->sqociDisconnect:OCIServerDetach
+ 13964(  7284) 08/03/2021 19:05:40  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:22. Threads remaining: 5 of 50
+ 13964( 18712) 08/03/2021 19:05:40  RTE I Undisplayed message:NOP--------------
+ 13964( 18712) 08/03/2021 19:05:40  RTE I sql total 1.422  call#:874 -->sqociDisconnect:OCISessionEnd
+ 13964( 18712) 08/03/2021 19:05:40  RTE I sql total 1.422  call#:875 -->sqociDisconnect:OCIServerDetach
+ 13964( 18712) 08/03/2021 19:05:40  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:21. Threads remaining: 4 of 50
+ 13964( 13548) 08/03/2021 19:05:40  RTE I User max has logged out.  Still licensed ( 1 session remaining )
+ 13964( 13548) 08/03/2021 19:05:40  RTE I Undisplayed message:NOP--------------
+ 13964( 13548) 08/03/2021 19:05:40  RTE I sql total 0.859  call#:871 -->sqociDisconnect:OCISessionEnd
+ 13964( 13548) 08/03/2021 19:05:40  RTE I sql total 0.859  call#:872 -->sqociDisconnect:OCIServerDetach
+ 13964( 13548) 08/03/2021 19:05:40  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:20. Threads remaining: 3 of 50
+ 13964(  5832) 08/03/2021 19:05:40  RTE I User max has logged out and freed a Floating license ( 3 out of a maximum 20 )
+ 13964(  5832) 08/03/2021 19:05:40  RTE I Undisplayed message:NOP--------------
+ 13964(  5832) 08/03/2021 19:05:40  RTE I sql total 0.438  call#:879 -->sqociDisconnect:OCISessionEnd
+ 13964(  5832) 08/03/2021 19:05:40  RTE I sql total 0.438  call#:880 -->sqociDisconnect:OCIServerDetach
+ 13964(  5832) 08/03/2021 19:05:40  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:24. Threads remaining: 2 of 50
+ 13964(  3864) 08/03/2021 19:05:41 JRTE I Daothread exit due to timeout:eaist.integration
+ 13964(  3864) 08/03/2021 19:05:41 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964(  3864) 08/03/2021 19:05:41 JRTE I Termination signal: 0
+ 13964(  3864) 08/03/2021 19:05:41  RTE D Destroying DAOThread 43f6b1b0
+ 13964(  3864) 08/03/2021 19:05:41  RTE I -Memory : S(5337472) O(1282524) MAX(8139804) - MALLOC's Total(301717)
+ 13964(  3864) 08/03/2021 19:05:41  RTE I Thread termination in progress
+ 13964( 16712) 08/03/2021 19:05:41  RTE E EVP_CipherFinal_ex failed in desDecryptWithAES256CBC()
+ 13964( 16712) 08/03/2021 19:05:41  RTE E [OPENSSL] error:0606506D:digital envelope routines:EVP_DecryptFinal_ex:wrong final block length
+ 13964( 16712) 08/03/2021 19:05:41  RTE I Using "utalloc" memory manager, mode [0]
+ 13964( 16712) 08/03/2021 19:05:41  RTE I Process sm 9.63.0006 () System: 13080 (0x61EBB600) on PC (x64 64-bit) running Windows (6.2 Build 9200) Timezone GMT+03:00 Locale ru_RU from Is43-SM-APP02T
+ 13964( 16712) 08/03/2021 19:05:41  RTE I Host network address: 172.16.52.88
+ 13964( 16712) 08/03/2021 19:05:41  RTE I Thread attaching to resources with key 0x61EBB600
+ 13964( 16712) 08/03/2021 19:05:41  RTE D sqociConnect: sqociConnect - OCIServerDetach()
+ 13964( 16712) 08/03/2021 19:05:41  RTE D sql diff 0.000  total 0.000  call#:1 --> sqociConnect:sqociConnect - OCIServerDetach()
+ 13964( 16712) 08/03/2021 19:05:41  RTE D sqociConnect: SERVER ATTACH
+ 13964(  3864) 08/03/2021 19:05:41  RTE I User eaist.integration has logged out and freed a Floating license ( 2 out of a maximum 20 )
+ 13964(  3864) 08/03/2021 19:05:41  RTE I sql total 0.423  call#:2406 -->sqociDisconnect:OCISessionEnd
+ 13964(  3864) 08/03/2021 19:05:41  RTE I sql total 0.423  call#:2407 -->sqociDisconnect:OCIServerDetach
+ 13964(  3864) 08/03/2021 19:05:41  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:45. Threads remaining: 1 of 50
+ 13964( 16712) 08/03/2021 19:05:41  RTE D sql diff 0.031  total 0.031  call#:2 --> sqociConnect:SERVER ATTACH
+ 13964( 16712) 08/03/2021 19:05:41  RTE D sqociConnect: BEGIN SESSION
+ 13964( 16712) 08/03/2021 19:05:41  RTE D sql diff 0.031  total 0.062  call#:3 --> sqociConnect:BEGIN SESSION
+ 13964( 16712) 08/03/2021 19:05:41  RTE I Connection to dbtype 'oracle10' Oracle server 'SMTST' as user 'SM' successful
+ 13964( 16712) 08/03/2021 19:05:41  RTE I Connected to Oracle Version 12.2.0.1.0
+ 13964( 16712) 08/03/2021 19:05:41  RTE I Oracle Client version: 12.1.0.2.0
+ 13964( 16712) 08/03/2021 19:05:41  RTE I Oracle server settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF8)
+ 13964( 16712) 08/03/2021 19:05:41  RTE I OCI Client settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF16)
+ 13964( 16712) 08/03/2021 19:05:41  RTE I Oracle instance setting for NLS_SORT is set to BINARY_CI
+ 13964( 16712) 08/03/2021 19:05:41  RTE I Oracle instance setting for NLS_COMP is set to LINGUISTIC
+ 13964( 16712) 08/03/2021 19:05:41  RTE I Oracle session is set up in CASE INSENSITIVE mode
+ 13964( 16712) 08/03/2021 19:05:41  RTE I Thread DAOThread - eaist.integration initialization done. Thread 2 of 50.
+ 13964( 16712) 08/03/2021 19:05:41  RTE I Total sessions since process began: 79379
+ 13964( 16712) 08/03/2021 19:05:41 JRTE I GUID=d8343e28-c634-487b-8370-60d8fd014bad
+ 13964( 16712) 08/03/2021 19:05:41  RTE I User eaist.integration has logged in and is using a Floating license ( 3 out of a maximum 20 )
+ 13964( 16712) 08/03/2021 19:05:41  RTE I -Memory : S(4659576) O(768452) MAX(5428028) - MALLOC's Total(158187)
+ 13964( 16712) 08/03/2021 19:05:42  RTE I Base login Response: 0.406 -- RAD: 0.000  JS: 0.155 Log:0.016 Database: 0.251(00731)  LDAP: 0.000 (CPU 0.203)  application:login,cleanup
+ 13964( 16712) 08/03/2021 19:06:12 JRTE I Daothread exit due to timeout:eaist.integration
+ 13964( 16712) 08/03/2021 19:06:12 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 16712) 08/03/2021 19:06:12 JRTE I Termination signal: 0
+ 13964( 16712) 08/03/2021 19:06:12  RTE D Destroying DAOThread 371ca050
+ 13964( 16712) 08/03/2021 19:06:12  RTE I -Memory : S(5235808) O(1232348) MAX(8024924) - MALLOC's Total(288948)
+ 13964( 16712) 08/03/2021 19:06:12  RTE I Thread termination in progress
+ 13964( 16712) 08/03/2021 19:06:12  RTE I User eaist.integration has logged out and freed a Floating license ( 2 out of a maximum 20 )
+ 13964( 16712) 08/03/2021 19:06:12  RTE I sql total 0.471  call#:1866 -->sqociDisconnect:OCISessionEnd
+ 13964( 16712) 08/03/2021 19:06:12  RTE I sql total 0.471  call#:1867 -->sqociDisconnect:OCIServerDetach
+ 13964( 16712) 08/03/2021 19:06:12  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:31. Threads remaining: 1 of 50
+ 13964(  1644) 08/03/2021 19:06:12  RTE E EVP_CipherFinal_ex failed in desDecryptWithAES256CBC()
+ 13964(  1644) 08/03/2021 19:06:12  RTE E [OPENSSL] error:0606506D:digital envelope routines:EVP_DecryptFinal_ex:wrong final block length
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Using "utalloc" memory manager, mode [0]
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Process sm 9.63.0006 () System: 13080 (0x61EBB600) on PC (x64 64-bit) running Windows (6.2 Build 9200) Timezone GMT+03:00 Locale ru_RU from Is43-SM-APP02T
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Host network address: 172.16.52.88
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Thread attaching to resources with key 0x61EBB600
+ 13964(  1644) 08/03/2021 19:06:12  RTE D sqociConnect: sqociConnect - OCIServerDetach()
+ 13964(  1644) 08/03/2021 19:06:12  RTE D sql diff 0.000  total 0.000  call#:1 --> sqociConnect:sqociConnect - OCIServerDetach()
+ 13964(  1644) 08/03/2021 19:06:12  RTE D sqociConnect: SERVER ATTACH
+ 13964(  1644) 08/03/2021 19:06:12  RTE D sql diff 0.015  total 0.015  call#:2 --> sqociConnect:SERVER ATTACH
+ 13964(  1644) 08/03/2021 19:06:12  RTE D sqociConnect: BEGIN SESSION
+ 13964(  1644) 08/03/2021 19:06:12  RTE D sql diff 0.032  total 0.047  call#:3 --> sqociConnect:BEGIN SESSION
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Connection to dbtype 'oracle10' Oracle server 'SMTST' as user 'SM' successful
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Connected to Oracle Version 12.2.0.1.0
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Oracle Client version: 12.1.0.2.0
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Oracle server settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF8)
+ 13964(  1644) 08/03/2021 19:06:12  RTE I OCI Client settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF16)
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Oracle instance setting for NLS_SORT is set to BINARY_CI
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Oracle instance setting for NLS_COMP is set to LINGUISTIC
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Oracle session is set up in CASE INSENSITIVE mode
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Thread DAOThread - eaist.integration initialization done. Thread 2 of 50.
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Total sessions since process began: 79380
+ 13964(  1644) 08/03/2021 19:06:12 JRTE I GUID=94f1c26a-fb92-4c0c-a148-de9c1360a5f6
+ 13964(  1644) 08/03/2021 19:06:12  RTE I User eaist.integration has logged in and is using a Floating license ( 3 out of a maximum 20 )
+ 13964(  1644) 08/03/2021 19:06:12  RTE I -Memory : S(4659576) O(768452) MAX(5428028) - MALLOC's Total(158187)
+ 13964(  1644) 08/03/2021 19:06:12  RTE I Base login Response: 0.359 -- RAD: 0.000  JS: 0.140 Log:0.000 Database: 0.219(00731)  LDAP: 0.000 (CPU 0.217)  application:login,cleanup
+ 13964(  1644) 08/03/2021 19:06:43 JRTE I Daothread exit due to timeout:eaist.integration
+ 13964(  1644) 08/03/2021 19:06:43 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964(  1644) 08/03/2021 19:06:43 JRTE I Termination signal: 0
+ 13964(  1644) 08/03/2021 19:06:43  RTE D Destroying DAOThread e321190
+ 13964(  1644) 08/03/2021 19:06:43  RTE I -Memory : S(5235808) O(1232348) MAX(8024924) - MALLOC's Total(288948)
+ 13964(  1644) 08/03/2021 19:06:43  RTE I Thread termination in progress
+ 13964(  1644) 08/03/2021 19:06:43  RTE I User eaist.integration has logged out and freed a Floating license ( 2 out of a maximum 20 )
+ 13964(  1644) 08/03/2021 19:06:43  RTE I sql total 0.390  call#:1866 -->sqociDisconnect:OCISessionEnd
+ 13964(  1644) 08/03/2021 19:06:43  RTE I sql total 0.390  call#:1867 -->sqociDisconnect:OCIServerDetach
+ 13964(  1644) 08/03/2021 19:06:43  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:31. Threads remaining: 1 of 50
+ 13964(  3656) 08/03/2021 19:06:43  RTE E EVP_CipherFinal_ex failed in desDecryptWithAES256CBC()
+ 13964(  3656) 08/03/2021 19:06:43  RTE E [OPENSSL] error:0606506D:digital envelope routines:EVP_DecryptFinal_ex:wrong final block length
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Using "utalloc" memory manager, mode [0]
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Process sm 9.63.0006 () System: 13080 (0x61EBB600) on PC (x64 64-bit) running Windows (6.2 Build 9200) Timezone GMT+03:00 Locale ru_RU from Is43-SM-APP02T
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Host network address: 172.16.52.88
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Thread attaching to resources with key 0x61EBB600
+ 13964(  3656) 08/03/2021 19:06:43  RTE D sqociConnect: sqociConnect - OCIServerDetach()
+ 13964(  3656) 08/03/2021 19:06:43  RTE D sql diff 0.000  total 0.000  call#:1 --> sqociConnect:sqociConnect - OCIServerDetach()
+ 13964(  3656) 08/03/2021 19:06:43  RTE D sqociConnect: SERVER ATTACH
+ 13964(  3656) 08/03/2021 19:06:43  RTE D sql diff 0.062  total 0.062  call#:2 --> sqociConnect:SERVER ATTACH
+ 13964(  3656) 08/03/2021 19:06:43  RTE D sqociConnect: BEGIN SESSION
+ 13964(  3656) 08/03/2021 19:06:43  RTE D sql diff 0.047  total 0.109  call#:3 --> sqociConnect:BEGIN SESSION
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Connection to dbtype 'oracle10' Oracle server 'SMTST' as user 'SM' successful
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Connected to Oracle Version 12.2.0.1.0
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Oracle Client version: 12.1.0.2.0
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Oracle server settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF8)
+ 13964(  3656) 08/03/2021 19:06:43  RTE I OCI Client settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF16)
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Oracle instance setting for NLS_SORT is set to BINARY_CI
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Oracle instance setting for NLS_COMP is set to LINGUISTIC
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Oracle session is set up in CASE INSENSITIVE mode
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Thread DAOThread - eaist.integration initialization done. Thread 2 of 50.
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Total sessions since process began: 79381
+ 13964(  3656) 08/03/2021 19:06:43 JRTE I GUID=130a506f-2f4d-405c-80d1-3e001e1e5969
+ 13964(  3656) 08/03/2021 19:06:43  RTE I User eaist.integration has logged in and is using a Floating license ( 3 out of a maximum 20 )
+ 13964(  3656) 08/03/2021 19:06:43  RTE I -Memory : S(4659576) O(768452) MAX(5428028) - MALLOC's Total(158187)
+ 13964(  3656) 08/03/2021 19:06:43  RTE I Base login Response: 0.485 -- RAD: 0.000  JS: 0.174 Log:0.016 Database: 0.311(00731)  LDAP: 0.000 (CPU 0.296)  application:login,cleanup
+ 13964(  3656) 08/03/2021 19:08:14 JRTE I Daothread exit due to timeout:eaist.integration
+ 13964(  3656) 08/03/2021 19:08:14 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964(  3656) 08/03/2021 19:08:14 JRTE I Termination signal: 0
+ 13964(  3656) 08/03/2021 19:08:14  RTE D Destroying DAOThread 44484090
+ 13964(  3656) 08/03/2021 19:08:14  RTE I -Memory : S(5642656) O(1362844) MAX(8562268) - MALLOC's Total(339982)
+ 13964(  3656) 08/03/2021 19:08:14  RTE I Thread termination in progress
+ 13964(  3656) 08/03/2021 19:08:14  RTE I User eaist.integration has logged out and freed a Floating license ( 2 out of a maximum 20 )
+ 13964(  3656) 08/03/2021 19:08:14  RTE I sql total 0.748  call#:4026 -->sqociDisconnect:OCISessionEnd
+ 13964(  3656) 08/03/2021 19:08:14  RTE I sql total 0.748  call#:4027 -->sqociDisconnect:OCIServerDetach
+ 13964(  3656) 08/03/2021 19:08:14  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:01:31. Threads remaining: 1 of 50
+ 13964( 12144) 08/03/2021 19:08:14  RTE E EVP_CipherFinal_ex failed in desDecryptWithAES256CBC()
+ 13964( 12144) 08/03/2021 19:08:14  RTE E [OPENSSL] error:0606506D:digital envelope routines:EVP_DecryptFinal_ex:wrong final block length
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Using "utalloc" memory manager, mode [0]
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Process sm 9.63.0006 () System: 13080 (0x61EBB600) on PC (x64 64-bit) running Windows (6.2 Build 9200) Timezone GMT+03:00 Locale ru_RU from Is43-SM-APP02T
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Host network address: 172.16.52.88
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Thread attaching to resources with key 0x61EBB600
+ 13964( 12144) 08/03/2021 19:08:14  RTE D sqociConnect: sqociConnect - OCIServerDetach()
+ 13964( 12144) 08/03/2021 19:08:14  RTE D sql diff 0.000  total 0.000  call#:1 --> sqociConnect:sqociConnect - OCIServerDetach()
+ 13964( 12144) 08/03/2021 19:08:14  RTE D sqociConnect: SERVER ATTACH
+ 13964( 12144) 08/03/2021 19:08:14  RTE D sql diff 0.062  total 0.062  call#:2 --> sqociConnect:SERVER ATTACH
+ 13964( 12144) 08/03/2021 19:08:14  RTE D sqociConnect: BEGIN SESSION
+ 13964( 12144) 08/03/2021 19:08:14  RTE D sql*diff 0.141  total 0.203  call#:3 --> sqociConnect:BEGIN SESSION
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Connection to dbtype 'oracle10' Oracle server 'SMTST' as user 'SM' successful
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Connected to Oracle Version 12.2.0.1.0
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Oracle Client version: 12.1.0.2.0
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Oracle server settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF8)
+ 13964( 12144) 08/03/2021 19:08:14  RTE I OCI Client settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF16)
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Oracle instance setting for NLS_SORT is set to BINARY_CI
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Oracle instance setting for NLS_COMP is set to LINGUISTIC
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Oracle session is set up in CASE INSENSITIVE mode
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Thread DAOThread - eaist.integration initialization done. Thread 2 of 50.
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Total sessions since process began: 79382
+ 13964( 12144) 08/03/2021 19:08:14 JRTE I GUID=33b4dab5-b123-4a62-91b2-fee8fbb4c011
+ 13964( 12144) 08/03/2021 19:08:14  RTE I User eaist.integration has logged in and is using a Floating license ( 3 out of a maximum 20 )
+ 13964( 12144) 08/03/2021 19:08:14  RTE I -Memory : S(4659576) O(768452) MAX(5428028) - MALLOC's Total(158187)
+ 13964( 12144) 08/03/2021 19:08:14  RTE I Base login Response: 0.546 -- RAD: 0.000  JS: 0.155 Log:0.000 Database: 0.391(00731)  LDAP: 0.000 (CPU 0.186)  application:login,cleanup
+ 13964( 12144) 08/03/2021 19:09:00 JRTE I Daothread exit due to timeout:eaist.integration
+ 13964( 12144) 08/03/2021 19:09:00 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 12144) 08/03/2021 19:09:00 JRTE I Termination signal: 0
+ 13964( 12144) 08/03/2021 19:09:00  RTE D Destroying DAOThread 43f7d310
+ 13964( 12144) 08/03/2021 19:09:00  RTE I -Memory : S(5337104) O(1282892) MAX(8143900) - MALLOC's Total(301687)
+ 13964( 12144) 08/03/2021 19:09:00  RTE I Thread termination in progress
+ 13964( 19992) 08/03/2021 19:09:00  RTE E EVP_CipherFinal_ex failed in desDecryptWithAES256CBC()
+ 13964( 19992) 08/03/2021 19:09:00  RTE E [OPENSSL] error:0606506D:digital envelope routines:EVP_DecryptFinal_ex:wrong final block length
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Using "utalloc" memory manager, mode [0]
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Process sm 9.63.0006 () System: 13080 (0x61EBB600) on PC (x64 64-bit) running Windows (6.2 Build 9200) Timezone GMT+03:00 Locale ru_RU from Is43-SM-APP02T
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Host network address: 172.16.52.88
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Thread attaching to resources with key 0x61EBB600
+ 13964( 19992) 08/03/2021 19:09:00  RTE D sqociConnect: sqociConnect - OCIServerDetach()
+ 13964( 19992) 08/03/2021 19:09:00  RTE D sql diff 0.000  total 0.000  call#:1 --> sqociConnect:sqociConnect - OCIServerDetach()
+ 13964( 19992) 08/03/2021 19:09:00  RTE D sqociConnect: SERVER ATTACH
+ 13964( 12144) 08/03/2021 19:09:00  RTE I User eaist.integration has logged out and freed a Floating license ( 2 out of a maximum 20 )
+ 13964( 12144) 08/03/2021 19:09:00  RTE I sql total 0.578  call#:2406 -->sqociDisconnect:OCISessionEnd
+ 13964( 12144) 08/03/2021 19:09:00  RTE I sql total 0.578  call#:2407 -->sqociDisconnect:OCIServerDetach
+ 13964( 12144) 08/03/2021 19:09:00  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:46. Threads remaining: 1 of 50
+ 13964( 19992) 08/03/2021 19:09:00  RTE D sql diff 0.031  total 0.031  call#:2 --> sqociConnect:SERVER ATTACH
+ 13964( 19992) 08/03/2021 19:09:00  RTE D sqociConnect: BEGIN SESSION
+ 13964( 19992) 08/03/2021 19:09:00  RTE D sql diff 0.016  total 0.047  call#:3 --> sqociConnect:BEGIN SESSION
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Connection to dbtype 'oracle10' Oracle server 'SMTST' as user 'SM' successful
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Connected to Oracle Version 12.2.0.1.0
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Oracle Client version: 12.1.0.2.0
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Oracle server settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF8)
+ 13964( 19992) 08/03/2021 19:09:00  RTE I OCI Client settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF16)
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Oracle instance setting for NLS_SORT is set to BINARY_CI
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Oracle instance setting for NLS_COMP is set to LINGUISTIC
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Oracle session is set up in CASE INSENSITIVE mode
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Thread DAOThread - eaist.integration initialization done. Thread 2 of 50.
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Total sessions since process began: 79383
+ 13964( 19992) 08/03/2021 19:09:00 JRTE I GUID=a05188d2-cb25-41d1-adcb-53e08215470c
+ 13964( 19992) 08/03/2021 19:09:00  RTE I User eaist.integration has logged in and is using a Floating license ( 3 out of a maximum 20 )
+ 13964( 19992) 08/03/2021 19:09:00  RTE I -Memory : S(4659576) O(768452) MAX(5428028) - MALLOC's Total(158187)
+ 13964( 19992) 08/03/2021 19:09:00  RTE I Base login Response: 0.328 -- RAD: 0.000  JS: 0.171 Log:0.015 Database: 0.157(00731)  LDAP: 0.000 (CPU 0.234)  application:login,cleanup
+ 13964( 19992) 08/03/2021 19:09:15 JRTE I Daothread exit due to timeout:eaist.integration
+ 13964( 19992) 08/03/2021 19:09:15 JRTE I DAOThread exits after idle for (sec): dao_sessiontimeout=15
+ 13964( 19992) 08/03/2021 19:09:15 JRTE I Termination signal: 0
+ 13964( 19992) 08/03/2021 19:09:15  RTE D Destroying DAOThread 371ca050
+ 13964( 19992) 08/03/2021 19:09:15  RTE I -Memory : S(5134416) O(1210668) MAX(7742044) - MALLOC's Total(276167)
+ 13964( 19992) 08/03/2021 19:09:15  RTE I Thread termination in progress
+ 13964( 12740) 08/03/2021 19:09:15  RTE E EVP_CipherFinal_ex failed in desDecryptWithAES256CBC()
+ 13964( 12740) 08/03/2021 19:09:15  RTE E [OPENSSL] error:0606506D:digital envelope routines:EVP_DecryptFinal_ex:wrong final block length
+ 13964( 12740) 08/03/2021 19:09:15  RTE I Using "utalloc" memory manager, mode [0]
+ 13964( 12740) 08/03/2021 19:09:15  RTE I Process sm 9.63.0006 () System: 13080 (0x61EBB600) on PC (x64 64-bit) running Windows (6.2 Build 9200) Timezone GMT+03:00 Locale ru_RU from Is43-SM-APP02T
+ 13964( 12740) 08/03/2021 19:09:15  RTE I Host network address: 172.16.52.88
+ 13964( 12740) 08/03/2021 19:09:15  RTE I Thread attaching to resources with key 0x61EBB600
+ 13964( 12740) 08/03/2021 19:09:15  RTE D sqociConnect: sqociConnect - OCIServerDetach()
+ 13964( 12740) 08/03/2021 19:09:15  RTE D sql diff 0.000  total 0.000  call#:1 --> sqociConnect:sqociConnect - OCIServerDetach()
+ 13964( 12740) 08/03/2021 19:09:15  RTE D sqociConnect: SERVER ATTACH
+ 13964( 19992) 08/03/2021 19:09:15  RTE I User eaist.integration has logged out and freed a Floating license ( 2 out of a maximum 20 )
+ 13964( 19992) 08/03/2021 19:09:15  RTE I sql total 0.282  call#:1326 -->sqociDisconnect:OCISessionEnd
+ 13964( 19992) 08/03/2021 19:09:15  RTE I sql total 0.282  call#:1327 -->sqociDisconnect:OCIServerDetach
+ 13964( 19992) 08/03/2021 19:09:15  RTE I Thread termination cleanup complete.  Thread was active for 0 days,00:00:15. Threads remaining: 1 of 50
+ 13964( 12740) 08/03/2021 19:09:15  RTE D sql diff 0.031  total 0.031  call#:2 --> sqociConnect:SERVER ATTACH
+ 13964( 12740) 08/03/2021 19:09:15  RTE D sqociConnect: BEGIN SESSION
+ 13964( 12740) 08/03/2021 19:09:15  RTE D sql diff 0.032  total 0.063  call#:3 --> sqociConnect:BEGIN SESSION
+ 13964( 12740) 08/03/2021 19:09:15  RTE I Connection to dbtype 'oracle10' Oracle server 'SMTST' as user 'SM' successful
+ 13964( 12740) 08/03/2021 19:09:15  RTE I Connected to Oracle Version 12.2.0.1.0
+ 13964( 12740) 08/03/2021 19:09:15  RTE I Oracle Client version: 12.1.0.2.0
+ 13964( 12740) 08/03/2021 19:09:15  RTE I Oracle server settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF8)
+ 13964( 12740) 08/03/2021 19:09:15  RTE I OCI Client settings for language, territory and character set: AMERICAN_AMERICA.AL32UTF8 (UTF16)
+ 13964( 12740) 08/03/2021 19:09:15  RTE I Oracle instance setting for NLS_SORT is set to BINARY_CI
+ 13964( 12740) 08/03/2021 19:09:15  RTE I Oracle instance setting for NLS_COMP is set to LINGUISTIC
+ 13964( 12740) 08/03/2021 19:09:15  RTE I Oracle session is set up in CASE INSENSITIVE mode
+ 13964( 12740) 08/03/2021 19:09:15  RTE I Thread DAOThread - eaist.integration initialization done. Thread 2 of 50.
+ 13964( 12740) 08/03/2021 19:09:15  RTE I Total sessions since process began: 79384
+ 13964( 12740) 08/03/2021 19:09:15 JRTE I GUID=eab894a0-b379-430b-a73f-c333f19add5a
+ 13964( 12740) 08/03/2021 19:09:15  RTE I User eaist.integration has logged in and is using a Floating license ( 3 out of a maximum 20 )
+ 13964( 12740) 08/03/2021 19:09:16  RTE I -Memory : S(4659576) O(768452) MAX(5428028) - MALLOC's Total(158187)
+ 13964( 12740) 08/03/2021 19:09:16  RTE I Base login Response: 0.360 -- RAD: 0.000  JS: 0.171 Log:0.000 Database: 0.189(00731)  LDAP: 0.000 (CPU 0.203)  application:login,cleanup

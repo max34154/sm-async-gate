@@ -1,0 +1,14 @@
+module_ip: localhost:13080
+login: max
+async_gateway_id: 1AEF
+collections:
+- {name: FOSeaist, acl: true}
+- {name: FOSpp, acl: false}
+max-attachment-size: 20000000
+max-total-att-size: 0
+mime-types: [image/png, image/jpg, image/jpeg, image/bmp, image/tiff, application/msword,
+  text/csv, text/html, text/javascript, text/plain, application/json, application/pdf,
+  application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation,
+  application/vnd.rar, application/rtf, application/vnd.visio, application/vnd.ms-excel,
+  application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/zip]
+async-pusher-enabled: true
