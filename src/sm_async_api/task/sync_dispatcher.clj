@@ -71,47 +71,12 @@
         (recur (<!! in)))))
   (info id ":Task reader exited."))
 
-
 (defn exit-thread [^String id]
   (let [pusher-id ((str/split id #"\/" 2) 0)]
     (when (some? (@online-pushers pusher-id))
       (info (format  "Thread %s exited, %s threads left" id
                      (((swap! online-pushers update-in [pusher-id :threads] dec)
                        pusher-id) :threads))))))
-
-
-
-;(defn task-1-executor [in out ^String id  pusher]
-;  (info id ":Waiting for task")
-;  (go
-;    (loop [input (<! in)]
-;      (debug id ": recived action -" input)
-;     (action-processor input (sp/processor (pusher input id) id)))))
-
-
-
-
-#_(defn sync-task-executor [in out ^String id  pusher]
-    (info id ":Waiting for task")
-    (go
-      (loop [input (<! in)]
-        (debug id ": recived action -" input)
-        (_case input
-               nil   (exit-thread id) ;(log (format  "Channel is closed.Thread %s exited " id))
-
-               command-exit (exit-thread id)
-
-               fetch-marker (do (>! out  fetch-marker) (recur  (<! in)))
-
-               (do (debug  id ":Run task:"  (input :req_id))
-                   (_case  (sp/processor (pusher input id) id)
-                           tr/NEXT-ACTION (recur (<! in))
-                           tr/RETRY-ACTION (do
-                                             (<! (timeout (* max-retry-wating (rand))))
-                                             (recur input))
-                           tr/EXIT-THREAD  (exit-thread id)
-                           (do (error "Unknow processor responce for  " input)
-                               (recur (<! in)))))))))
 
 (defn- write-channel-callback-factory [channel]
   (fn [resp]
@@ -120,50 +85,14 @@
       (debug resp))
     (>!! channel resp)))
 
-(defn get-task-fabric [async?  pusher write-channel-callback local-channel]
-  (if async?
-    (fn [input id]
-      (pusher input id write-channel-callback)
-      (<! local-channel))
-    (fn [input id] (pusher input id))))
-
 (defn task-executor-fabric [async?]
   (let [local-channel (when async? (chan))
         write-channel-callback (when async? (write-channel-callback-factory local-channel))]
     (fn [in out ^String id pusher]
-      (let [get-task (get-task-fabric async? pusher  write-channel-callback local-channel)]
-        (reportf "%s:Task executor configured for %s mode" id (if (nil? local-channel) "sync" "async"))
-        (go
-          (loop [input (<! in)]
-            (_case input
-                   nil   (exit-thread id) ;(log (format  "Channel is closed.Thread %s exited " id))
-
-                   command-exit (exit-thread id)
-
-                   fetch-marker (do (>! out  fetch-marker) (recur  (<! in)))
-
-                   (do (debug  id ":Run task:"  (input :req_id))
-                       (pusher input id write-channel-callback)
-                       (_case  (sp/processor (get-task input id) id)
-                               tr/NEXT-ACTION (recur (<! in))
-                               tr/RETRY-ACTION (do
-                                                 (<! (timeout (* max-retry-wating (rand))))
-                                                 (recur input))
-                               tr/EXIT-THREAD  (exit-thread id)
-                               (do (error "Unknow processor responce for  " input)
-                                   (recur (<! in)))))));)
-          (close! local-channel))))))
-
-
-
-#_(defn task-executor [in out ^String id  pusher async?]
-    (go
-      (let [local-channel (when async? (chan))
-            write-channel-callback (when async? (write-channel-callback-factory local-channel))
-            get-task (get-task-fabric async? pusher write-channel-callback local-channel)]
-        (info id ":local-channel " local-channel " created. Waiting for tasks.")
+      (reportf "%s:Task executor configured for %s mode" id (if (nil? local-channel) "sync" "async"))
+      (go
+        ;(let [get-task  ;(get-task-fabric async? pusher  write-channel-callback local-channel) ]
         (loop [input (<! in)]
-       ; (debug id ": recived action -" input)
           (_case input
                  nil   (exit-thread id) ;(log (format  "Channel is closed.Thread %s exited " id))
 
@@ -172,8 +101,10 @@
                  fetch-marker (do (>! out  fetch-marker) (recur  (<! in)))
 
                  (do (debug  id ":Run task:"  (input :req_id))
-                     (pusher input id write-channel-callback)
-                     (_case  (sp/processor (get-task input id) id)
+                     (_case  (sp/processor (if async?
+                                             (do (pusher input id write-channel-callback)
+                                                 (<! local-channel))
+                                             (pusher input id)) id)
                              tr/NEXT-ACTION (recur (<! in))
                              tr/RETRY-ACTION (do
                                                (<! (timeout (* max-retry-wating (rand))))
@@ -181,34 +112,7 @@
                              tr/EXIT-THREAD  (exit-thread id)
                              (do (error "Unknow processor responce for  " input)
                                  (recur (<! in)))))));)
-        (close! local-channel))))
-
-
-#_(defn async-task-executor [in out ^String id  pusher]
-    (go
-      (let [local-channel (chan)
-            write-channel-callback (write-channel-callback-factory local-channel)]
-        (info id ":local-channel " local-channel " created. Waiting for tasks.")
-        (loop [input (<! in)]
-       ; (debug id ": recived action -" input)
-          (_case input
-                 nil   (exit-thread id) ;(log (format  "Channel is closed.Thread %s exited " id))
-
-                 command-exit (exit-thread id)
-
-                 fetch-marker (do (>! out  fetch-marker) (recur  (<! in)))
-
-                 (do (debug  id ":Run task:"  (input :req_id))
-                     (pusher input id write-channel-callback)
-                     (_case  (sp/processor (<! local-channel) id)
-                             tr/NEXT-ACTION (recur (<! in))
-                             tr/RETRY-ACTION (do
-                                               (<! (timeout (* max-retry-wating (rand))))
-                                               (recur input))
-                             tr/EXIT-THREAD  (exit-thread id)
-                             (do (error "Unknow processor responce for  " input)
-                                 (recur (<! in)))))));)
-        (close! local-channel))))
+        (close! local-channel)))));)
 
 
 (defn build-exclude-list []
@@ -250,7 +154,7 @@
     channel-size (+ chank-size (quot chank-size 2) threads)
     task-buffer (chan  channel-size)
     reader-control (chan (sliding-buffer 2))
-    condition  (build-condition params);(or (params :user) (params :include-list) (params :exclude-list))
+    condition  (build-condition params)
     global-id (str (config/get-config :async_gateway_id) "-" local-id)]
     (if (nil? condition)
       (fatal "Incorrect condition for pusher %s. Supplied parameters %s. Pusher skipped."
@@ -270,7 +174,6 @@
                          (str global-id "/" i)
                          pusher))
 
-        ;(>! reader-control  fetch-marker) ;kick the reader  
         {global-id
          {:task-buffer task-buffer
           :reader-control reader-control
@@ -290,15 +193,12 @@
               dal/task-reader
               (pusher-factory :user-mode get-allowed config workers)
               task-executor))
-              ;(if get-allowed sp/push-user-mode-get-allowed sp/push-user-mode)))
+              
 
 (defn pusher-manager-run  []
   (let [{:keys [workers config]}  @config/config
-        ;pusher-factory (if (= (config  :async-pusher-enabled) true)
-        ;                 sp/async-pusher-factory sp/sync-pusher-factory)
         pusher-factory (sp/get-pusher-factory (config  :async-pusher-enabled))
-        task-executor  (task-executor-fabric (config  :async-pusher-enabled)) #_(if (= (config  :async-pusher-enabled) true)
-                                                                                  async-task-executor sync-task-executor)]
+        task-executor  (task-executor-fabric (config  :async-pusher-enabled))]
     (send tw/result-writer tw/get-result-writer)
     (send tw/action-rescheduler tw/get-action-rescheduler)
     (infof "Configure pushers (async-mode: %s) ..." (config  :async-pusher-enabled))
