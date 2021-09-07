@@ -1,0 +1,15 @@
+module_ip: 212.11.152.7:13080
+login: max
+async_gateway_id: 1AEF
+collections:
+- {name: FOSeaist, acl: true}
+- {name: FOSpp, acl: false}
+max-att-size: 10000000
+max-total-att-size: 0
+mime-types: [image/png, image/jpg, image/jpeg, image/bmp, image/tiff, application/msword,
+  text/csv, text/html, text/javascript, text/plain, application/json, application/pdf,
+  application/vnd.ms-powerpoint, application/vnd.openxmlformats-officedocument.presentationml.presentation,
+  application/vnd.rar, application/rtf, application/vnd.visio, application/vnd.ms-excel,
+  application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/zip]
+keystore: {data: hCw2wtoHHvvWljIQeSh5jLU7dCIotWs/PKYEDeoDtw1WWaXcc8zPsdUjjo6WSEHYv1f75oeqhxpoGU9gwHWbbg==,
+  iv: +z9qnkdDV+qZVItL8mWq4g==}

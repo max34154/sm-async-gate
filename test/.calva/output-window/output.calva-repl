@@ -1,0 +1,38 @@
+; This is the Calva evaluation results output window.
+; TIPS: The keyboard shortcut `ctrl+alt+c o` shows and focuses this window
+;   when connected to a REPL session.
+; Please see https://calva.io/output/ for more info.
+; Happy coding! ♥️
+
+; Jacking in...
+; Starting Jack-in Terminal: lein update-in :dependencies conj '[nrepl,"0.8.3"]' -- update-in :plugins conj '[cider/cider-nrepl,"0.26.0"]' -- update-in '[:repl-options,:nrepl-middleware]' conj '["cider.nrepl/cider-middleware"]' -- with-profile +uberjar repl :headless
+; Hooking up nREPL sessions...
+; Connected session: clj
+; TIPS: 
+;   - You can edit the contents here. Use it as a REPL if you like.
+;   - `alt+enter` evaluates the current top level form.
+;   - `ctrl+enter` evaluates the current form.
+;   - `alt+up` and `alt+down` traverse up and down the REPL command history
+;      when the cursor is after the last contents at the prompt
+;   - Clojure lines in stack traces are peekable and clickable.
+clj꞉sm-async-api.core꞉>  ; Use `alt+enter` to evaluate
+; Jack-in done.
+clj꞉sm-async-api.core꞉> 
+; Evaluating file: sync_dispatcher_infra_test.clj
+; Syntax error (FileNotFoundException) compiling at (sm_async_api/task/sync_dispatcher_infra_test.clj:1:1).
+; Could not locate sm_async_api/task/sync_dispatcher__init.class, sm_async_api/task/sync_dispatcher.clj or sm_async_api/task/sync_dispatcher.cljc on classpath. Please check that namespaces with dashes use underscores in the Clojure file name.
+; Evaluation of file sync_dispatcher_infra_test.clj failed: class clojure.lang.Compiler$CompilerException
+
+clj꞉sm-async-api.core꞉> 
+; Running tests for sm_async_api.task.sync_dispatcher_infra_test...
+; No tests found. 😱, ns: 0, vars: 0
+clj꞉sm_async_api.task.sync_dispatcher_infra_test꞉> 
+; Evaluating file: sync_pusher_test.clj
+; Syntax error (FileNotFoundException) compiling at (sm_async_api/task/sync_pusher_test.clj:1:1).
+; Could not locate sm_async_api/task/sync_pusher__init.class, sm_async_api/task/sync_pusher.clj or sm_async_api/task/sync_pusher.cljc on classpath. Please check that namespaces with dashes use underscores in the Clojure file name.
+; Evaluation of file sync_pusher_test.clj failed: class clojure.lang.Compiler$CompilerException
+
+clj꞉sm_async_api.task.sync_dispatcher_infra_test꞉> 
+; Running tests for sm-async-api.task.sync_pusher_test...
+; No tests found. 😱, ns: 0, vars: 0
+clj꞉sm-async-api.task.sync_pusher_test꞉> 

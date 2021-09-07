@@ -1,0 +1,11 @@
+module_ip: 212.11.152.7:13080
+login: max
+async_gateway_id: 1AEF
+collections:
+- {name: FOSeaist, acl: true}
+- {name: FOSpp, acl: false}
+max-att-size: 10000000
+max-total-att-size: 0
+mime-types: {null: true}
+to-many-threads-sleep: 100
+server-not-availalbe-sleep: 3000

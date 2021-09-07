@@ -1,0 +1,21 @@
+
+        {
+            "name": "Clojure-Debug Internal Console",
+            "type": "clojure",
+            "request": "launch",
+            "commandLine": [
+              "$lein_path",
+              "with-profile",
+              "+debug-repl",
+              "repl",
+              ":headless",
+              ":port",
+              "7777"
+            ],
+            "replPort": 7777,
+            "port": 7777,
+            "debugReplPort": 7778,
+            "debugPort": 9999,
+            "sideChannelPort": 3030
+          }
+  

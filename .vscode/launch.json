@@ -1,0 +1,30 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+
+        
+        {
+            "commandLine": [
+                "/usr/local/bin/lein",
+                "with-profile",
+                "+debug-repl",
+                "repl",
+                ":start",
+                ":port",
+                "5555"
+            ],
+            "name": "Clojure-Debug",
+            "type": "clojure",
+            "request": "attach",
+            "replPort": 51619,
+            "env": {},
+            "debugReplPort": 7778,
+			"debugPort": 9999,
+			"cwd": "${workspaceRoot}",
+			"sideChannelPort": 3030
+        }
+    ]
+}
