@@ -11,6 +11,7 @@
                  [clj-http "3.12.0"]
                  [ring/ring-core "1.9.3"]
                  [ring "1.9.0"]
+                 [hikari-cp "2.13.0"]
                  [org.clojure/tools.logging "1.1.0"]
                  [metosin/ring-http-response "0.9.2"]
                  [io.forward/yaml "1.0.10"]

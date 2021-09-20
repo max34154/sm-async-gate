@@ -12,22 +12,33 @@
 
 
 
-(defn- case_list  [ cases]
-   (let [lng (count cases)]
-               (map (fn [a b ]  
-                      (if (even? b)  a 
-                       (if (= b lng) a (eval a))))
-                    cases
-                    (iterate inc 1))))
+(defn- case_list  [cases]
+  (let [lng (count cases)]
+    (map (fn [a b]
+           (if (even? b)  a
+               (if (= b lng) a (eval a))))
+         cases
+         (iterate inc 1))))
 
 (defmacro _case [v & cases]
-  (conj (case_list   cases) v 'case ))
+  (conj (case_list   cases) v 'case))
 
 (defmacro tod []
-   `(System/currentTimeMillis) )
+  `(System/currentTimeMillis))
 
 (defmacro tod-seconds []
   `(quot (System/currentTimeMillis) 1000))
 
 (defmacro unixtime->timestamp [t]
   `(.toString (new java.sql.Timestamp ~t)))
+
+(defmacro get-channel-id [ch]
+  `((str/split (pr-str ~ch) #" ") 1))
+
+(defmacro resp-data [resp]
+  `(str  (#(str  (:thread %1) ": rec-id " (:rec-id %1))
+          (:opts ~resp))
+         " status " (:status ~resp)))
+
+(defmacro thread-group [thread]
+  `((str/split ~thread #"/" 2) 0))

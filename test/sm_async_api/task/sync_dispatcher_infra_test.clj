@@ -5,7 +5,7 @@
                                              responce-INTERNAL-ERROR-GENERIC
                                              responce-INTERNAL-ERROR
                                              responce-NOT-ATHORIZED
-                                             responce-TOO-MANY-TREADS
+                                             responce-TOO-MANY-THREADS
                                              responce-NO-SERVER-json
                                              responce-NO-SERVER-no-json
                                              responce-ERROR
@@ -93,7 +93,8 @@
 
 (deftest build-dispatcher-infra-test
   (testing "Infrastructre managment"
-    (let [pushers (sd/pusher-manager-run)]
+    (sd/pusher-manager-run)
+    (let [pushers @sd/online-pushers]
       (testing  "Tesing pusher creator "
         (is (some? pushers)))
       (testing  "Testing thread killer"
@@ -107,10 +108,12 @@
 
 (deftest close-channel-test
   (testing "Close channel test"
-    (let [pushers          (sd/pusher-manager-run)]
+    (sd/pusher-manager-run)
+    (let [pushers         @sd/online-pushers ]
       (Thread/sleep 2000)
-      (sd/pusher-manager-do-all sd/pusher-manager-kill)
-      (Thread/sleep 1000)
+      (sd/shatdown-pushers 2)
+      ;(sd/pusher-manager-do-all sd/pusher-manager-kill)
+      ;(Thread/sleep 1000)
       (doseq [pusher pushers]
         (testing (str "Check if all threads a removed" (pusher 0))
           (is (= 0 ((@sd/online-pushers (pusher 0)) :threads))))))))

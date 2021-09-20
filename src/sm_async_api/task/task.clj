@@ -74,7 +74,7 @@
     
     (if (s/valid?  :sm_async_api.validate/post-task-result (spy :debug req) )
       (let [result (dal/wrap-insert dal/post_task_result req)]
-        (if  (vector?  result)
+        (if  (nil? (:err result))
            http-errors/ok-200 
           (http-errors/internal-50x  req   result)))
     incorrect-result))

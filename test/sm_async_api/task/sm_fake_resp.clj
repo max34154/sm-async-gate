@@ -28,50 +28,64 @@
           :body ~(if (nil? code) "" (format (http-post-return-base :body) message (eval code)))
           :status ~status))
 
-(def responce-OK (responce sm/RC_SUCCESS "" http-errors/OK))
+(def responce-OK "Expected behavior - write and take next item from channel"
+  (responce sm/RC_SUCCESS "" http-errors/OK))
 
-(def responce-OK-RC-CANT-HAVE (responce sm/RC_CANT_HAVE "" http-errors/OK))
+(def responce-OK-RC-CANT-HAVE "Expected behavior - reschedule and take next item from channel"
+  (responce sm/RC_CANT_HAVE "" http-errors/OK))
 
-(def responce-OK-RC-VALIDATION-FAILED (responce sm/RC_VALIDATION_FAILED "" http-errors/OK))
+(def responce-OK-RC-VALIDATION-FAILED "Expected behavior - reschedule and take next item from channel"
+  (responce sm/RC_VALIDATION_FAILED "" http-errors/OK))
 
-(def responce-OK-RC-NOT-AUTHORIZED  (responce sm/RC_NOT_AUTHORIZED "" http-errors/OK))
+(def responce-OK-RC-NOT-AUTHORIZED  
+  (responce sm/RC_NOT_AUTHORIZED "" http-errors/OK))
 
 
-(def responce-NOT-ATHORIZED
+(def responce-NOT-ATHORIZED 
+  "Expected behavior - write and if thread in user-mode then take next item from channel
+   else exit thread."
   (responce sm/RC_WRONG_CREDENTIALS "Not Authorized.xx" http-errors/Unathorized))
 
-(def responce-TOO-MANY-TREADS
+(def responce-TOO-MANY-THREADS 
+  "Expected behavior - retry till ok or retry limit exceeded then reschedule and take next item from channel"
   (responce sm/RC_WRONG_CREDENTIALS "Too many ..." http-errors/Unathorized))
 
-(def responce-UNK-ATH-ERR
+(def responce-UNK-ATH-ERR 
+  "Expected behavior - write and take next item from channel"
   (responce nil "Too many ..." http-errors/Unathorized))
 
-(def responce-NO-MORE
+(def responce-NO-MORE 
+  "Expected behavior - write and take next item from channel"
   (responce sm/RC_NO_MORE "Incorrect service name" http-errors/Not-Found))
 
-(def responce-NO-SERVER-json
-  (responce nil "Too many ..." http-errors/Not-Found))
+(def responce-NO-SERVER-json 
+  "Expected behavior - retry till ok or retry limit exceeded then reschedule and take next item from channel "
+  (responce 4 "Too many ..." http-errors/Not-Found))
 
-(def responce-NO-SERVER-no-json
-  (assoc responce-NO-SERVER-json :headers
-         (assoc (responce-NO-SERVER-json :headers)
-                :content-type  "text/html;charset=utf-8")))
+(def responce-NO-SERVER-NO-RC  
+  "Expected behavior -  reschedule and  sleep than take next item from channel "
+  (assoc http-post-return-base
+         :body "{\"Something\":\"d\"}"
+         :status http-errors/Not-Found))
 
-(def responce-INTERNAL-ERROR
+(def responce-NO-SERVER-no-json "Expected behavior - SERVER-NOT-AVAILABLE???? "
+  (update-in responce-NO-SERVER-json [:headers :content-type] (constantly "text/html;charset=utf-8")))
+
+(def responce-INTERNAL-ERROR "Expected behavior - write and take next item from channel"
   (responce nil "write and go ..." http-errors/Internal-Server-Error))
 
-(def responce-BAD-REQ
+(def responce-BAD-REQ "Expected behavior - write and take next item from channel"
   (responce nil "bad req write and go ..." http-errors/Bad-Request))
 
-(def responce-INTERNAL-ERROR-GENERIC
+(def responce-INTERNAL-ERROR-GENERIC "Expected behavior - write and take next item from channel"
   (assoc responce-INTERNAL-ERROR :headers
          (assoc (responce-INTERNAL-ERROR :headers)
                 :content-type  "text/html;charset=utf-8")))
 
-(def responce-WRONG-CREDS
+(def responce-WRONG-CREDS "Expected behavior - reschedule and take next item from channel"
   (responce sm/RC_WRONG_CREDENTIALS "write and go ..." http-errors/Internal-Server-Error))
 
-(def responce-UNK-ERROR
+(def responce-UNK-ERROR "Expected behavior - reschedule and take next item from channel"
   (responce nil "write and go ..." 10000))
 
 (def responce-ERROR 

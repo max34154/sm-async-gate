@@ -6,7 +6,8 @@
   (:require  [cheshire.core :as json]
              ;[clojure.java.io :as io]
              [clojure.string :as str]
-             [clj-http.client :as http]
+             ;[clj-http.client :as http]
+             [org.httpkit.client :as http]
              [sm_async_api.utils.base64 :refer [b64->string]]
              [sm_async_api.http_errors :as http-errors]
              [sm_async_api.utils.macro :refer [tod-seconds]]
@@ -15,7 +16,7 @@
                       logf tracef debugf infof warnf errorf fatalf reportf
                       spy get-env]]
              [sm_async_api.config :as config]
-             [sm_async_api.dal :as dal]))
+             [sm_async_api.dal.user :as dal-u]))
 
 ;(def decode-base64 b64->string)
 
@@ -44,7 +45,7 @@
                                          :access-list (when access-list (set (acl-to-keys access-list)))
                                          :valid-till valid})
     (swap! user-cache assoc name row)
-    (dal/update-user  row)))
+    (@dal-u/update-user  row)))
 
 (defn get-credentials [name]
   (or  (->> @user-cache
@@ -53,7 +54,7 @@
        (#(when %                     ;when-not (nil? %)
            (swap! user-cache assoc name %)
            (:password %))
-        (:val (dal/get-user name)))))
+        (:val (@dal-u/get-user name)))))
 
 (defn remove-credentials [name password]
   (when (= (->> @user-cache
@@ -61,8 +62,8 @@
                 :password)
            password)
     (swap! user-cache dissoc name))
-  (when (= (-> (dal/get-user name) :val :password) password)
-    (dal/delete-user name)))
+  (when (= (-> (@dal-u/get-user name) :val :password) password)
+    (@dal-u/delete-user name)))
 
 (defn check-acl [request]
   (let [authorization ((:headers request) "authorization")
@@ -83,11 +84,12 @@
 
 (defn sm-login [user-name user-password auth]
   (let [token-info-response
-        (http/post (config/get-config :auth-url)
+        @(http/post (config/get-config :auth-url)
                    {:basic-auth   [user-name user-password]
                     :content-type :json
                     :body (format "{user:{name:\"%s\"}}" user-name)
-                    :throw-exceptions false})
+                    ;:throw-exceptions false
+                    })
         {:keys [ReturnCode user]} (auth-token-info token-info-response)
         {:keys [acl]} user]
     (when (= ReturnCode 0)

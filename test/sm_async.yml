@@ -12,3 +12,4 @@ mime-types: [image/png, image/jpg, image/jpeg, image/bmp, image/tiff, applicatio
   application/vnd.rar, application/rtf, application/vnd.visio, application/vnd.ms-excel,
   application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/zip]
 async-pusher-enabled: true
+write-intermidiate-result: false

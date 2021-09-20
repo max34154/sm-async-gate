@@ -1,0 +1,2 @@
+{db-type: h2, db-host: 'localhost:9092', db-name: ~/test, db-login: sa, db-schema: ASYNC,
+  h2-protocol: tcp, h2-path: null}

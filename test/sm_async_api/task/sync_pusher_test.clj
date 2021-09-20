@@ -5,7 +5,7 @@
                                              responce-INTERNAL-ERROR-GENERIC
                                              responce-INTERNAL-ERROR
                                              responce-NOT-ATHORIZED
-                                             responce-TOO-MANY-TREADS
+                                             responce-TOO-MANY-THREADS
                                              responce-NO-SERVER-json
                                              responce-NO-SERVER-no-json
                                              responce-ERROR
@@ -22,7 +22,7 @@
    [sm_async_api.config :as config]
    [sm_async_api.enum.task_result :as tr]
    [sm_async_api.session :as session]
-   [sm_async_api.dal :as dal]
+   [sm_async_api.dal.user :as dal-u]
    [clojure.walk :refer [keywordize-keys]]
    [cheshire.core :as json]
    [sm-async-api.task.sm_fake_resp :refer :all]
@@ -75,20 +75,25 @@
   (with-fake-http [url (keywordize-header resp)]
     (pusher test-action "test-thread")))
 
+
+(defn- get-pusher [mode get-allowed]
+  ((sp/get-pusher-factory false) mode get-allowed (config/get-config) (config/get-workers)))
+
+
 (defn fix-setup-session [t]
-  (with-redefs [sm_async_api.dal/update-user update-user
-                sm_async_api.dal/get-user get-user
-                sm_async_api.dal/delete-user delete-user
-                sm_async_api.task.writers/result-writer sm_async_api.task.writers/silent-result-writer
-                sm_async_api.task.writers/action-rescheduler sm_async_api.task.writers/silent-action-rescheduler]
+  (with-redefs [dal-u/update-user (delay update-user)
+                dal-u/get-user (delay get-user)
+                dal-u/delete-user  (delay delete-user)
+                sm_async_api.task.writers/result-writer (delay sm_async_api.task.writers/silent-result-writer)
+                sm_async_api.task.writers/action-rescheduler (delay sm_async_api.task.writers/silent-action-rescheduler)]
     (config/configure "test/");"test/sm_async_api/")
     (session/new-session authorization user-name nil)
     (t)))
 
 (deftest test-sync-pusher-user-mode
   (testing  "Test user mode sync-pusher request structure:"
-    (let [url (spy (sync-url test-action))
-          resp (request url  responce-OK (sp/pusher-factory :user-mode false))
+    (let [url (sync-url test-action)
+          resp (request url  responce-OK (get-pusher :user-mode false))
           {:keys [mode rec-id headers thread]} (:opts resp)
           authorization (when headers (headers "Authorization"))]
       (testing "Url"
@@ -101,9 +106,8 @@
         (is (= "test_id" rec-id)))
       (testing "authorization"
         (is (= "password" authorization)))))
-
-   (testing  "Test sync-pusher proccessor in user mode"
-    (let [pusher (sp/pusher-factory :user-mode true)]
+  (testing  "Test sync-pusher proccessor in user mode"
+    (let [pusher (get-pusher :user-mode true)]
       (are  [r p] (= r (sp/processor
                         (request (sync-url test-action) p pusher)
                         "test-thread"))
@@ -112,17 +116,17 @@
         tr/NEXT-ACTION  responce-INTERNAL-ERROR-GENERIC ;result/OK
         tr/NEXT-ACTION  responce-INTERNAL-ERROR ;result/OK
         tr/NEXT-ACTION   responce-NOT-ATHORIZED  ;result/NOT-ATHORIZED 
-        tr/RETRY-ACTION  responce-TOO-MANY-TREADS    ;result/TOO-MANY-TREADS ;
+        tr/RETRY-ACTION  responce-TOO-MANY-THREADS    ;result/TOO-MANY-THREADS ;
         tr/RETRY-ACTION  responce-NO-SERVER-json    ;result/SERVER-NOT-AVAILABLE
-        tr/RETRY-ACTION  responce-NO-SERVER-no-json ;result/SERVER-NOT-AVAILABLE
+        tr/SERVER-NOT-AVAILABLE  responce-NO-SERVER-no-json ;result/SERVER-NOT-AVAILABLE
         tr/EXIT-THREAD   responce-ERROR  ;resule/ERROR
         ))))
 
- (deftest test-sync-pusher-global-mode
+(deftest test-sync-pusher-global-mode
   (testing  "Test global mode sync-pusher request structure:"
-    (let [resp (request (sync-url test-action)  
-                        responce-OK 
-                        (sp/pusher-factory :global-mode false))
+    (let [resp (request (sync-url test-action)
+                        responce-OK
+                        (get-pusher :global-mode false))
           {:keys [mode rec-id headers thread]} (:opts resp)
           authorization (when headers (headers "Authorization"))]
       (testing "Url"
@@ -134,9 +138,9 @@
       (testing "rec-id"
         (is (= "test_id" rec-id)))
       (testing "authorization"
-        (is (= (config/get-config :global-credentials) authorization)))))
+        (is (= (config/get-workers :global-credentials) authorization)))))
   (testing  "Test sync-pusher proccessor in global mode"
-    (let [pusher (sp/pusher-factory :global-mode false)]
+    (let [pusher (get-pusher :global-mode false)]
       (are  [r p] (= r (sp/processor
                         (request (sync-url test-action) p pusher)
                         "test-thread"))
@@ -145,17 +149,17 @@
         tr/NEXT-ACTION  responce-INTERNAL-ERROR-GENERIC ;result/OK
         tr/NEXT-ACTION  responce-INTERNAL-ERROR ;result/OK
         tr/EXIT-THREAD   responce-NOT-ATHORIZED  ;result/NOT-ATHORIZED 
-        tr/RETRY-ACTION  responce-TOO-MANY-TREADS    ;result/TOO-MANY-TREADS ;
+        tr/RETRY-ACTION  responce-TOO-MANY-THREADS    ;result/TOO-MANY-THREADS ;
         tr/RETRY-ACTION  responce-NO-SERVER-json    ;result/SERVER-NOT-AVAILABLE
-        tr/RETRY-ACTION  responce-NO-SERVER-no-json ;result/SERVER-NOT-AVAILABLE
+        tr/SERVER-NOT-AVAILABLE  responce-NO-SERVER-no-json ;result/SERVER-NOT-AVAILABLE
         tr/EXIT-THREAD   responce-ERROR  ;resule/ERROR
         ))))
 
- (deftest test-asycn-pusher
+(deftest test-asycn-pusher
   (testing   "Test async mode sync-pusher request structure:"
-    (let [resp (request (config/get-config :async-action-url) 
-                        responce-OK 
-                        (sp/pusher-factory :async-mode false))
+    (let [resp (request (config/get-config :async-action-url)
+                        responce-OK
+                        (get-pusher :async-mode false))
           {:keys [mode rec-id headers thread body]} (:opts resp)
           authorization (when headers (headers "Authorization"))
           {:keys [UserName TicketID Request]} (json/parse-string body keyword)
@@ -170,7 +174,7 @@
       (testing "rec-id"
         (is (= "test_id" rec-id)))
       (testing "authorization"
-        (is (= (config/get-config :async-credentials) authorization)))
+        (is (= (config/get-workers :async-credentials) authorization)))
       (testing  "Async body form"
         (is (= "test"  UserName))
         (is (= "test-subject" TicketID))
@@ -181,7 +185,7 @@
         (is (= 50 (-> Request :execution :retries)))
         (is (= 20 (-> Request :execution :retiryInterval))))))
   (testing (format "Test async-pusher")
-    (let [pusher (sp/pusher-factory :async-mode false)]
+    (let [pusher (get-pusher :async-mode false)]
       (are  [r p] (= r (sp/processor
                         (request (config/get-config :async-action-url) p pusher)
                         "test-thread"))
@@ -190,9 +194,9 @@
         tr/NEXT-ACTION  responce-INTERNAL-ERROR-GENERIC ;result/OK
         tr/NEXT-ACTION  responce-INTERNAL-ERROR ;result/OK
         tr/EXIT-THREAD   responce-NOT-ATHORIZED  ;result/NOT-ATHORIZED 
-        tr/RETRY-ACTION  responce-TOO-MANY-TREADS    ;result/TOO-MANY-TREADS ;
+        tr/RETRY-ACTION  responce-TOO-MANY-THREADS    ;result/TOO-MANY-THREADS ;
         tr/RETRY-ACTION  responce-NO-SERVER-json    ;result/SERVER-NOT-AVAILABLE
-        tr/RETRY-ACTION  responce-NO-SERVER-no-json ;result/SERVER-NOT-AVAILABLE
+        tr/SERVER-NOT-AVAILABLE  responce-NO-SERVER-no-json ;result/SERVER-NOT-AVAILABLE
         tr/EXIT-THREAD   responce-ERROR  ;resule/ERROR
         ))))
 

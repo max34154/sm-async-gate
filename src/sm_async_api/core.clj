@@ -1,27 +1,29 @@
 (ns sm-async-api.core
   (:require ;[clojure.java.io :as io]
             ;[clojure.pprint :refer [pprint]]
-            [org.httpkit.server :as httpkit]
+   ;[org.httpkit.server :as httpkit]
             ;[ring.util.http-response :refer [ok content-type ] :as resp]
-            [ring.middleware.format :refer [wrap-restful-format]]
-            [ring.middleware.content-type :refer [wrap-content-type]]
+   [ring.middleware.format :refer [wrap-restful-format]]
+   [ring.middleware.content-type :refer [wrap-content-type]]
            ; [ring.middleware.params :refer [wrap-params]]
-            [ring.middleware.multipart-params :refer [wrap-multipart-params]]
+   [ring.middleware.multipart-params :refer [wrap-multipart-params]]
             ;[bidi.bidi :as bidi]
-            [bidi.ring :refer (make-handler)]
-            [clojure.string :as str]
-            [cheshire.core :as json]
-            [ring.middleware.json :refer [wrap-json-body]]
-            [taoensso.timbre :as timbre
-             :refer [
-                     ;log  trace      warn  error  fatal  report
+   [bidi.ring :refer (make-handler)]
+   [clojure.string :as str]
+   [cheshire.core :as json]
+   [ring.middleware.json :refer [wrap-json-body]]
+   [taoensso.timbre :as timbre
+    :refer [;log  trace      warn  error  fatal  report
                      ;logf tracef debugf infof warnf errorf fatalf reportf get-env
-                     spy debug info error ]]
-            [sm_async_api.session :as session]
-            [sm_async_api.dal :as dal]
-            [sm_async_api.config :as config]
-            [sm_async_api.task.task :as task :refer [worker-access]]
-            [sm_async_api.http_errors :as http-errors])
+            spy debug info error fatal]]
+   [sm_async_api.session :as session]
+   [sm_async_api.dal :as dal]
+   [sm_async_api.config :refer [configure get-uid get-config]]
+   [sm_async_api.dal.configure :refer [configure-database]]
+   [sm-async-api.request.request :refer [start-AccessHTTPServer stop-AccesHTTPServer]]
+
+   [sm_async_api.task.task :as task :refer [worker-access]]
+   [sm_async_api.http_errors :as http-errors])
   (:gen-class)
   (:import [java.sql SQLIntegrityConstraintViolationException])
   (:import [java.net URLEncoder]))
@@ -37,12 +39,12 @@
 ;            (config/get-module-name))))
 
 #_(defn serve-index [_]
-  (-> "<html><h1>Hello</h1></html>"
-      (ok)
-      (content-type "text/html; charset=UTF-8")))
+    (-> "<html><h1>Hello</h1></html>"
+        (ok)
+        (content-type "text/html; charset=UTF-8")))
 
 #_(defn serve-ping [req]
-  (ok {:id (-> req :route-params :name)}))
+    (ok {:id (-> req :route-params :name)}))
 
 (defn set-service [req]
   (assoc req :service (keyword ((str/split  (:uri req) #"\/" 3) 1))))
@@ -52,7 +54,7 @@
     (handler (set-service request))))
 
 (defn set-rec_id [req]
-  (assoc req :rec_id (config/get-uid)))
+  (assoc req :rec_id (get-uid)))
 
 (defn warp-set-rec_id [handler]
   (fn [request]
@@ -218,7 +220,7 @@
   (case  (req :request-method)
     :post (add-attachment req)
     :get  (get-attachments-list req)
-    (http-errors/not-found-404 (str "Unsupported REST command" (config/get-config :module_ip))))) ;(get cconfig/config :module_ip)
+    (http-errors/not-found-404 (str "Unsupported REST command" (get-config :module_ip))))) ;(get cconfig/config :module_ip)
 
 
 (defn get-attachment [req]
@@ -253,38 +255,57 @@
                 (for [route  collections] ;(get cconfig/config :collections)
                   (build_route route)))))
 
-(defn app []  (-> (routes (config/get-config :collections))
-             (make-handler)
-             (wrap-content-type  mime-types)
-             (wrap-restful-format :formats [:edn :json])
-             (session/warp-auth)))
+(defn app []  (-> (routes (get-config :collections))
+                  (make-handler)
+                  (wrap-content-type  mime-types)
+                  (wrap-restful-format :formats [:edn :json])
+                  (session/warp-auth)))
 
 
 
-(defonce AccesHTTPServer (atom nil))
+#_(defonce AccesHTTPServer (atom nil))
+
+(defn shutdown []
+  (stop-AccesHTTPServer))
+
+(defn startup [port path]
+  (info "Read configuration")
+  (configure path)
+  (info "Configure database")
+  (if (nil?  (configure-database))
+    (do
+      (start-AccessHTTPServer port)
+      (info "Initialization sucessfully competed."))
+    (fatal "Initialization failed.")))
 
 (defn -main [& [port path]]
-  (let [port (Integer/parseInt (or port "8080") 10)]
-    (info "Read configuration")
-    (config/configure path)
-    (reset! AccesHTTPServer (httpkit/run-server (app) {:port port}));(var app)
-    (info (format "App running at port %d..." port))
-    (info "Module IP " (config/get-config :module_ip)) ;(get cconfig/config :module_ip)
-    ;(when-let [g  (config/get-config :async_gateway_id)] ;(reset! module_name g)
-    ;  (config/set-module-name g))
-    (dal/check_db)
-    (info "Configured collections: ")
-    (doseq [collection (config/get-config :collections)]
-      (let [{:keys [name acl]} collection]
-        (info "Service" name  (if acl "access-list enabled" ""))))
-    (worker-access  (+ port 1))))
+  (startup (Integer/parseInt (or port "8080") 10) path))
+   
 
-(defn stop-AccesHTTPServer []
-  (when-not (nil? @AccesHTTPServer)
+
+
+
+#_(defn -main [& [port path]]
+    (let [port (Integer/parseInt (or port "8080") 10)]
+      (info "Read configuration")
+      (config/configure path)
+      (reset! AccesHTTPServer (httpkit/run-server (app) {:port port}));(var app)
+      (info (format "App running at port %d..." port))
+      (info "Module IP " (get-config :module_ip)) ;(get cconfig/config :module_ip)
+    ;(when-let [g  (get-config :async_gateway_id)] ;(reset! module_name g)
+    ;  (config/set-module-name g))
+      (dal/check_db)
+      (info "Configured collections: ")
+      (doseq [collection (get-config :collections)]
+        (let [{:keys [name acl]} collection]
+          (info "Service" name  (if acl "access-list enabled" ""))))
+      (worker-access  (+ port 1))))
+
+#_(when-not (nil? @AccesHTTPServer)
     ;; graceful shutdown: wait 100ms for existing requests to be finished
     ;; :timeout is optional, when no timeout, stop immediately
     (@AccesHTTPServer :timeout 100)
-    (reset! AccesHTTPServer nil)))
+    (reset! AccesHTTPServer nil))
 
 
 (comment (-main "3000"))

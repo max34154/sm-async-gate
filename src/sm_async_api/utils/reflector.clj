@@ -9,7 +9,7 @@
                                                                               responce-INTERNAL-ERROR-GENERIC
                                                                               responce-INTERNAL-ERROR
                                                                               responce-NOT-ATHORIZED
-                                                                              responce-TOO-MANY-TREADS
+                                                                              responce-TOO-MANY-THREADS
                                                                               responce-NO-SERVER-json
                                                                               responce-NO-SERVER-no-json
                                                                               responce-ERROR]}}
@@ -33,7 +33,7 @@
                                                     responce-INTERNAL-ERROR-GENERIC
                                                     responce-INTERNAL-ERROR
                                                     responce-NOT-ATHORIZED
-                                                    responce-TOO-MANY-TREADS
+                                                    responce-TOO-MANY-THREADS
                                                     responce-NO-SERVER-json
                                                     responce-NO-SERVER-no-json
                                                     responce-ERROR]]
@@ -69,13 +69,13 @@
   (timbre/with-merged-config
     {:appenders {:spit (appenders/spit-appender {:fname "log/reflector.log"})
                  :println {:enabled? false}}}
-    (debug "Url:" (req->url request)
-           "User:" (last (re-find #"^Basic (.*)$" (b64->string ((request :headers) "authorization"))))
-           "\n Header" (request :headers)
-           "\n" debug-margin  "...Body " (request :body)
-           "\n" debug-margin "...Responce" @responce)
-    ;(handler (spy :debug request)))
-    @responce))
+    (let [rsp  (#(if (fn? %) (%) %) @responce)]
+      (debug "Url:" (req->url request)
+             "User:" (last (re-find #"^Basic (.*)$" (b64->string ((request :headers) "authorization"))))
+             "\n Header" (request :headers)
+             "\n" debug-margin  "...Body " (request :body)
+             "\n" debug-margin "...Responce" rsp)
+      rsp)))
 
 (defn- reflector-routes [base-path]
   [base-path  {[:service "/" :subject] {:get  make-responce}
@@ -91,7 +91,8 @@
 (defonce ^:private ReflectorHTTPServer (atom nil))
 
 (defn relector-set-responce  [val]
-  (reset! responce (stringify-headers val)))
+  (reset! responce (if (fn? val ) (fn [] (stringify-headers (val)))
+                                    (stringify-headers val))))
 
 (defn  reflector-start [& responce]
   (let [config (config/get-config)

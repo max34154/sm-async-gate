@@ -11,3 +11,8 @@ pom.xml.asc
 /.prepl-port
 .hgignore
 .hg/
+log/
+.calva/output-window/output.calva-repl
+.clj-kondo/.cache/
+src/.clj-kondo/.cache/
+

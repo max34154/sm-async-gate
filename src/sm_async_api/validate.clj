@@ -23,10 +23,11 @@
 
 (s/def :action-request/retry_interval  (s/and int? #(> % min-retry-interval)))
 
-(s/def :action-request/body (s/keys  :opt-un [:action-request/execution_mode
+(s/def :action-request/body (s/or :nil nil? 
+                                  :json (s/keys  :opt-un [:action-request/execution_mode
                                               :action-request/execution_retries
                                               :action-request/status
-                                              :action-request/retry_interval]))
+                                              :action-request/retry_interval])))
 
 (s/def ::post-action-request (s/keys :opt-un [:action-request/body]))
 
@@ -51,7 +52,15 @@
 (s/def ::post-task-result (s/keys :req-un [:task-request/rec_id
                                            :task-request/content-type
                                            :task-request/body]))
+(create-ns 'attachment)
 
-(s/def ::mime-type  #( (config/get-config :mime-types) (keyword %)))
+(def ^:private mem-types (delay (config/get-config :mime-types)))
 
-(s/def ::attachment-size (s/and int? #(> (config/get-config :max-att-size)  %)))
+(def ^:private max-attachment-size (delay (config/get-config :max-attachment-size)))
+
+(s/def :attachment/content-type  #( @mem-types (keyword %)))
+
+(s/def :attachment/content-length (s/and int? #(> @max-attachment-size  %)))
+
+(s/def ::insert-attachment (s/keys :req-un[:attachment/content-type
+                                           :attachment/content-length]))

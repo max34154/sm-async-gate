@@ -2,7 +2,7 @@
   (:require
 
    [sm_async_api.task.process_result :as pr :refer [OK
-                                                    TOO-MANY-TREADS
+                                                    TOO-MANY-THREADS
                                                     SERVER-NOT-AVAILABLE
                                                     NOT-ATHORIZED]]
    [sm_async_api.enum.sm :as sm]
@@ -36,11 +36,13 @@
           :body ~(if (nil? code) "" (format (http-post-return-base :body) message (eval code)))
           :status ~status))
 
-(defn test-result-writer [rec-id body status]
-  (str  "XXXWrite rec-id=" rec-id  "body" body "state=" status))
+(defn get-test-result-writer []
+  (fn [rec-id body status]
+    (str  "XXXWrite rec-id=" rec-id  "body" body "state=" status)))
 
-(defn test-action-rescheduler [rec-id body status]
-  (str  "XXXReschedule if possible rec-id=" rec-id   "body" body "state=" status))
+(defn get-test-action-rescheduler [] 
+  (fn [rec-id body status]
+  (str  "XXXReschedule if possible rec-id=" rec-id   "body" body "state=" status)))
 
 
 (def responce-OK (responce sm/RC_SUCCESS "" http-errors/OK))
@@ -48,7 +50,7 @@
 (def responce-NOT-ATHORIZED
   (responce sm/RC_WRONG_CREDENTIALS "Not Authorized.xx" http-errors/Unathorized))
 
-(def responce-TOO-MANY-TREADS
+(def responce-TOO-MANY-THREADS
   (responce sm/RC_WRONG_CREDENTIALS "Too many ..." http-errors/Unathorized))
 
 (def responce-UNK-ATH-ERR
@@ -84,12 +86,12 @@
 
 (deftest  test-process-result
   (testing "Check process-result (analyse results recived from sm) "
-    (with-redefs  [sm_async_api.task.writers/result-writer test-result-writer
-                   sm_async_api.task.writers/action-rescheduler   test-action-rescheduler]
+    (with-redefs  [sm_async_api.task.writers/result-writer (delay (get-test-result-writer))
+                   sm_async_api.task.writers/action-rescheduler  (delay (get-test-action-rescheduler))]
       (are  [r p] (= r (pr/process p))
         OK responce-OK
         NOT-ATHORIZED responce-NOT-ATHORIZED
-        TOO-MANY-TREADS responce-TOO-MANY-TREADS
+        TOO-MANY-THREADS responce-TOO-MANY-THREADS
         OK responce-UNK-ATH-ERR
         OK responce-NO-MORE
         SERVER-NOT-AVAILABLE responce-NO-SERVER-json

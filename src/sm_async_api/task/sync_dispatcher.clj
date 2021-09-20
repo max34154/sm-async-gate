@@ -11,7 +11,7 @@
             logf tracef debugf infof warnf errorf fatalf reportf
             spy get-env]]
    [sm_async_api.config :as config]
-   [sm_async_api.utils.macro :refer [_case]]
+   [sm_async_api.utils.macro :refer [_case get-channel-id resp-data]]
    [sm_async_api.enum.task_result :as tr]
    [taoensso.timbre.appenders.core :as appenders]
    [sm_async_api.task.writers :as tw]
@@ -22,19 +22,31 @@
 ;(timbre/merge-config!  {:appenders {:spit (appenders/spit-appender {:fname "log/dispatcher.log"})}})
 ;(timbre/set-level! :debug)
 
-(def default-thread-count 1)
+(def ^:const default-thread-count 1)
 
-(def default-chank-size 10)
+(def ^:const default-chank-size 10)
 
-(def fetch-marker "FETCH")
+(def ^:const fetch-marker "FETCH")
 
-(def new-task-wating 2000)
+(def ^:const default-new-task-waiting 2000)
 
-(def max-retry-wating 15000)
+(def ^:const default-max-retry-waiting 15); 15000)
+
+(def ^:const default-server-not-available-waiting 10) ;15000)
+
+(def ^:const default-max-retry-count 1)
 
 (defonce online-pushers (atom {}))
 
-(def command-exit "EXIT")
+(def ^:const command-exit "EXIT")
+
+
+(defn- exit-reader [^String id]
+  (if (some? (@online-pushers id))
+    (do
+      (swap! online-pushers update-in [id :reader-exited] (fn [_] true))
+      (reportf  "Reader %s exited." id))
+    (error (format "Reader %s not found in readers list: %s" id @online-pushers))))
 
 (defn task-reader [in out
                    chank-size
@@ -43,76 +55,113 @@
                    ^String condition
                    reader]
   (debug id ":Waiting for command.")
-  (a/thread
-    (loop [input (<!! in)]
-      (debug id ": recived command - " input)
-      (when-not (or (nil? input) (= command-exit input))
-        (let [result-set (reader id chank-size condition)]
-          (Thread/sleep 5); avoid double reading 
-          (debug id ":" (reduce #(str %1 "||" %2) "" result-set))
-          (if (empty?  result-set)
-            (do (debug id ": no actions available, fall sleep")
-                (Thread/sleep new-task-wating)
-                (>!! in  fetch-marker))
-            (if (zero? prefetch-marker-position)
-              (do
-                (doseq [result result-set] (>!! out result))
-                (>!! out  fetch-marker))
-              (loop [result-set result-set
-                     pos 0]
-                (let [f (first result-set)]
-                  (if (nil? f)
-                    (when-not (> pos prefetch-marker-position) (>!! out  fetch-marker))
-                    (do
-                      ;(debug "cmd " (f :req_id))
-                      (>!! out f)
-                      (when (= pos prefetch-marker-position) (>!! out  fetch-marker))
-                      (recur (rest result-set) (inc pos)))))))))
-        (recur (<!! in)))))
-  (info id ":Task reader exited."))
 
-(defn exit-thread [^String id]
+  (let [new-task-waiting  (or (config/get-executors-globals :new-task-waiting)  default-new-task-waiting)]
+    (a/thread
+      (loop [input (<!! in)]
+      ;(debug id ": recived command - " input)
+        (when-not (or (nil? input) (= command-exit input))
+          (let [result-set (reader id chank-size condition)]
+            (Thread/sleep 5); avoid double reading 
+            #_(timbre/with-merged-config
+                {:println {:enabled? false}
+                 :appenders {:spit (appenders/spit-appender {:fname (str "log/" id ".log")})}}
+                (if (empty? result-set)
+                  (debug id ":zero fetch")
+                  (debug id ":fetched items "
+                         (reduce #(str %1 ":"  (:req_id %2))  "" result-set) ":")))
+            (if (empty?  result-set)
+              (do (debug id ": no actions available, fall sleep")
+                  (Thread/sleep new-task-waiting)
+                  (>!! in  fetch-marker))
+              (if (zero? prefetch-marker-position)
+                (do
+                  (doseq [result result-set] (>!! out result))
+                  (>!! out  fetch-marker))
+                (loop [result-set result-set
+                       pos 0]
+                  (let [f (first result-set)]
+                    (if (nil? f)
+                      (when-not (> pos prefetch-marker-position) (>!! out  fetch-marker))
+                      (do
+                        (>!! out f)
+                        (when (= pos prefetch-marker-position) (>!! out  fetch-marker))
+                        (recur (rest result-set) (inc pos)))))))))
+          (recur (<!! in))))
+      (exit-reader id))))
+
+(defn- exit-thread [^String id]
   (let [pusher-id ((str/split id #"\/" 2) 0)]
-    (when (some? (@online-pushers pusher-id))
-      (info (format  "Thread %s exited, %s threads left" id
-                     (((swap! online-pushers update-in [pusher-id :threads] dec)
-                       pusher-id) :threads))))))
+    (if (some? (@online-pushers pusher-id))
+      (reportf  "Thread %s exited, %s threads left." id
+                (((swap! online-pushers update-in [pusher-id :threads] dec)
+                  pusher-id)  :threads))
+      (error (AssertionError. (format "Thread %s not found in thread list: %s" pusher-id @online-pushers))))))
 
 (defn- write-channel-callback-factory [channel]
   (fn [resp]
     (timbre/with-merged-config
-      {:appenders {:spit (appenders/spit-appender {:fname "log/cbk-channel.log"})}}
-      (debug resp))
+      {:appenders {:println {:enabled? false}
+                   :spit (appenders/spit-appender {:fname "log/cbk-channel.log"})}}
+      (debug (resp-data resp) "write-to channel " (get-channel-id channel)))
     (>!! channel resp)))
 
 (defn task-executor-fabric [async?]
-  (let [local-channel (when async? (chan))
-        write-channel-callback (when async? (write-channel-callback-factory local-channel))]
+  (let [executor-globals (config/get-executors-globals)
+        max-retry-waiting (or (:max-retry-waiting executor-globals) default-max-retry-waiting)
+        server-not-available-waiting (or (:server-not-available-waiting executor-globals) default-server-not-available-waiting)
+        max-retry-count (or (:max-retry-waiting executor-globals) default-max-retry-count)]
+    (reportf "Task executors global parameters: max-retry-count %d, \nmax-retry-waiting %d, \nserver-not-available-waiting %d"
+             max-retry-count max-retry-waiting server-not-available-waiting)
     (fn [in out ^String id pusher]
-      (reportf "%s:Task executor configured for %s mode" id (if (nil? local-channel) "sync" "async"))
-      (go
-        ;(let [get-task  ;(get-task-fabric async? pusher  write-channel-callback local-channel) ]
-        (loop [input (<! in)]
-          (_case input
-                 nil   (exit-thread id) ;(log (format  "Channel is closed.Thread %s exited " id))
+      (let [local-channel (when async? (chan))
+            write-channel-callback (when async? (write-channel-callback-factory local-channel))]
+        (timbre/with-merged-config
+          {:appenders {:println {:enabled? false}
+                       :spit (appenders/spit-appender {:fname (str "log/" ((str/split id #"/" 2) 0) ".log")})}}
+          (reportf "%s:Task executor configured for %s mode" id (if (nil? local-channel) "sync" "async"))
+          (go
+            (loop [input (<! in)
+                   retries 0]
+              (_case input
+                     nil   (exit-thread id) ;(log (format  "Channel is closed.Thread %s exited " id))
 
-                 command-exit (exit-thread id)
+                     command-exit (exit-thread id)
 
-                 fetch-marker (do (>! out  fetch-marker) (recur  (<! in)))
+                     fetch-marker (do (>! out  fetch-marker) (recur  (<! in) 0))
 
-                 (do (debug  id ":Run task:"  (input :req_id))
-                     (_case  (sp/processor (if async?
-                                             (do (pusher input id write-channel-callback)
-                                                 (<! local-channel))
-                                             (pusher input id)) id)
-                             tr/NEXT-ACTION (recur (<! in))
-                             tr/RETRY-ACTION (do
-                                               (<! (timeout (* max-retry-wating (rand))))
-                                               (recur input))
-                             tr/EXIT-THREAD  (exit-thread id)
-                             (do (error "Unknow processor responce for  " input)
-                                 (recur (<! in)))))));)
-        (close! local-channel)))));)
+                     (do (debug  id ":Run task:"  (input :req_id) "Retry:" retries)
+                         (let [result-code  (sp/processor (if async?
+                                                            (do (pusher input id write-channel-callback)
+                                                                (<! local-channel))
+                                                            (pusher input id)) id)]
+                           (debug  id ":Task:"  (input :req_id) "result code " result-code)
+                           (_case  result-code
+
+                                   tr/NEXT-ACTION (recur (<! in) 0)
+
+                                   tr/RETRY-ACTION (if (> max-retry-count retries)
+                                                     (do
+                                                       (debug id ":Task" (input :req_id) "retry " retries " delay started.")
+                                                       (<! (timeout (* max-retry-waiting (rand))))
+                                                       (recur input (inc retries)))
+                                                     (do
+                                                       (warn id ":Retry count exceeded for " (input :req_id) ".Action rescheduled")
+                                                       (@tw/action-rescheduler  (input :req_id) nil nil)
+                                                       (recur (<! in) 0)))
+
+                                   tr/SERVER-NOT-AVAILABLE (do
+                                                             (warnf "%s Server not available. Action %s rescheduled. Sleep for %sms"
+                                                                    id (input :req_id) server-not-available-waiting)
+                                                             (@tw/action-rescheduler  (input :req_id) nil nil)
+                                                             (<! (timeout server-not-available-waiting))
+                                                             (recur (<! in) 0))
+
+                                   tr/EXIT-THREAD  (exit-thread id)
+
+                                   (do (error id ":Unknow processor responce for  " input)
+                                       (recur (<! in) 0)))))))
+            (when (some? local-channel) (close! local-channel))))))))
 
 
 (defn build-exclude-list []
@@ -193,14 +242,14 @@
               dal/task-reader
               (pusher-factory :user-mode get-allowed config workers)
               task-executor))
-              
+
 
 (defn pusher-manager-run  []
   (let [{:keys [workers config]}  @config/config
         pusher-factory (sp/get-pusher-factory (config  :async-pusher-enabled))
         task-executor  (task-executor-fabric (config  :async-pusher-enabled))]
-    (send tw/result-writer tw/get-result-writer)
-    (send tw/action-rescheduler tw/get-action-rescheduler)
+    ;(send tw/result-writer tw/get-result-writer) ;replaced with delay in writer
+    ;(send tw/action-rescheduler tw/get-action-rescheduler) ;replaced with delay in writer
     (infof "Configure pushers (async-mode: %s) ..." (config  :async-pusher-enabled))
     (reset! online-pushers
             (conj
@@ -236,6 +285,12 @@
   (close! reader-control)
   (close! task-buffer))
 
+(defn pusher-manager-kill-reader [[_ {:keys [reader-control]}]]
+  (close! reader-control))
+
+(defn pusher-manager-kill-pusher [[_ {:keys [task-buffer]}]]
+  (close! task-buffer))
+
 (defn pusher-manager-kill-thread [[_ {:keys [task-buffer]}]]
   (>!!   task-buffer command-exit))
 
@@ -253,3 +308,36 @@
 (defn pusher-manager-get-pusher [pusher-id]
   (@online-pushers pusher-id))
 
+
+(defn- count-readers [total [_ {:keys [reader-exited]}]]
+  (if (true? reader-exited) total (inc total)))
+
+(defn- count-threads [total [_ {:keys [threads]}]]
+  (if (nil? threads) total (+ total threads)))
+
+(defn shatdown-pushers
+  ([] (shatdown-pushers 10))
+  ([max-wait-time]
+   (pusher-manager-do-all pusher-manager-kill-reader)
+   (loop [t  max-wait-time]
+     (let [active-readers (reduce count-readers 0 @online-pushers)]
+       (if (zero? active-readers)
+         (info "No more readers active")
+         (if  (> t 0)
+           (do
+             (infof "$s readers sill running...")
+             (Thread/sleep 1000)
+             (recur (dec t)))
+           (report "Readers grace period expired. %s readers still running." active-readers)))))
+
+   (pusher-manager-do-all pusher-manager-kill-pusher)
+   (loop [t max-wait-time]
+     (let [active-threads (reduce count-threads 0 @online-pushers)]
+       (if (zero? active-threads)
+         (info "No more pusher threads active.")
+         (if  (> t 0)
+           (do
+             (infof "$s pusher threads sill running...")
+             (Thread/sleep 1000)
+             (recur (dec t)))
+           (report "Pusher grace period expired. %s pusher threads still running." active-threads)))))))

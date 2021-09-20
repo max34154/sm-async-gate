@@ -2,13 +2,16 @@
 (ns ^:api sm-async-api.core-test
   {:clj-kondo/config  '{:linters {:unresolved-symbol
                                   {:exclude [testing use-fixtures deftest is are]}
-                        :refer-all {:level :off}}}}
+                                  :refer-all {:level :off}}}}
   (:require [clojure.java.io :as io]
             ;[org.httpkit.server :as httpkit]
             [org.httpkit.client :as http]
             [cheshire.core :as json]
-            [clojure.test :refer :all]))
-            ;[sm-async-api.core :refer [-main]]))
+            [sm_async_api.config :as config]
+            ;[sm_async_api.dal.configure :refer [configure-database]]
+            ;[sm_async_api.dal.globals :refer [task-action request-action]]
+            [clojure.test :refer :all]
+            [sm-async-api.core :refer [startup shutdown]]))
 
 (def basic-auth ["max" "Shis!!9SD234ds123"])
 (def action-url  "http://localhost:3000/")
@@ -43,6 +46,25 @@
 
 (def zero_body "")
 
+(comment "
+:remote-addr 127.0.0.1, 
+:params {:action_id 6144B248-1-1AEF}, 
+:route-params {:action_id 6144B248-1-1AEF}, 
+:headers {accept-encoding gzip, deflate, authorization Basic bWF4OlNoaXMhITlTRDIzNGRzMTIz, content-disposition attachmentfilename=obsluzhivanie.png, content-length 31305, content-type image/png, host localhost:3000, user-agent http-kit/2.0}, 
+:async-channel #object[org.httpkit.server.AsyncChannel 0x15b8fc38 /127.0.0.1:3000<->/127.0.0.1:52234], 
+:server-port 3000, 
+:content-length 31305, 
+:websocket? false, 
+:content-type image/png, 
+:character-encoding utf8, 
+:uri /Action/6144B248-1-1AEF/attachments, 
+:server-name localhost, 
+:user_name max, 
+:query-string nil, 
+:body #object[org.httpkit.BytesInputStream 0x3bdf9642 BytesInputStream[len=31305]], 
+:multipart-params {}, :scheme :http, :request-method :post}"
+)
+
 (def waiting_body
   "{ \"schedule_name\":\"test_sch\",\"execution_mode\":\"S\",
     \"status\":\"W\",
@@ -72,7 +94,7 @@
 (deftest test-post-enriched-action
   (with-local-vars [rec_id nil]
     (testing "Phase 1: post action"
-      (let [{:keys [status  body ] }
+      (let [{:keys [status  body]}
             @(http/post (str action-url "FOSpp/SD123232/add")
                         {:basic-auth basic-auth
                          :headers headers
@@ -84,7 +106,7 @@
     (testing (str "Phase 2: post one file into" @rec_id)
       (if (nil? @rec_id)
         (is false)
-        (let [{:keys [status] }
+        (let [{:keys [status]}
               @(http/post (str action-url "Action/" @rec_id "/attachments")
                           {:basic-auth basic-auth
                            :headers headers_png
@@ -93,7 +115,7 @@
     (testing (str "Phase 3: run action " @rec_id)
       (if (nil? @rec_id)
         (is false)
-        (let [{:keys [status  body ] }
+        (let [{:keys [status  body]}
               @(http/put (str action-url "Action/" @rec_id "/run")
                          {:basic-auth basic-auth
                           :headers headers
@@ -147,12 +169,12 @@
   (testing "Post action: incorrect body "
     (doseq [[body* description] wrong_bodies]
       (testing description
-        (let [{:keys [status ] }
+        (let [{:keys [status]}
               @(http/post (str action-url "FOSpp/SD123232/add")
                           {:basic-auth basic-auth
                            :headers headers
                            :body body*})]
-          (is (= 420 status)))))))
+          (is (= 422 status)))))))
 
 ;;
 ;; post action format 
@@ -209,4 +231,11 @@
                      :body standart_body}))
 
 
+(defn fix-test-core [t]
+  (startup  3000 "test/" )
+  (swap! sm_async_api.config/config update-in [:config :auth-url] (fn [_]"http://212.11.152.7:13080/SM/9/rest/asyncuser"))
+  (t)
+  (shutdown))
 
+
+(use-fixtures :once fix-test-core)
