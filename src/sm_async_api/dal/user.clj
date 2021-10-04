@@ -56,11 +56,17 @@
     (fn [name]
       (jdbc/delete! @db  user-cache ["name=?" name]))))
 
+(defn delete-user-cache-factory [^String db-schema]
+  (let [user-cache  (keyword (str db-schema ".user"))]
+    (fn []
+      (jdbc/delete! @db  user-cache ))))
+
 (defn configure [ {:keys [^String db-schema]}]
   {:update (update-user-factory db-schema)
    :get-all (get-all-user-factory db-schema)
    :get-by-name (get-user-factory db-schema)
-   :delete-by-name (delete-user-factory db-schema)})
+   :delete-by-name (delete-user-factory db-schema)
+   :delete-user-cache (delete-user-cache-factory db-schema)})
 
 (def get-user (delay (@user-action :get-by-name)))
 

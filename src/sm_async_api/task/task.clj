@@ -8,15 +8,11 @@
                 logf tracef debugf infof warnf errorf fatalf reportf
                 spy get-env]]
                 [org.httpkit.server :as httpkit]
-                ;[bidi.bidi :as bidi]
                 [clojure.string :as str]
-                ;[cheshire.core :as json]
                 [bidi.ring :refer (make-handler)]
                 [sm_async_api.http_errors :as http-errors]
                 [sm_async_api.dal :as dal]
                 [sm_async_api.attachment :as attachment]
-                ;[ring.middleware.json :refer [wrap-json-body]]
-                ;[ring.middleware.format :refer [wrap-restful-format]]
                 [ring.middleware.params :refer [wrap-params]]
                 [clojure.spec.alpha :as s ]))
             

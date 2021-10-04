@@ -36,5 +36,5 @@
     (if (nil? body) (http-errors/not-found-404)
         {:status 200
          :headers {"Content-Type" content_type
-                   "Content-Disposition" (str  "attachment;filename*=UTF-8''" (URLEncoder/encode name "UTF-8"))}
+                   "Content-Disposition" (str  "attachment;filename*=UTF-8''" (URLEncoder/encode ^String name "UTF-8"))}
          :body body})))

@@ -2,46 +2,46 @@
   (:require [clojure.string :as str]))
 
 
-(def ^:const OK 200)
+(def ^:const ^Integer OK 200)
 
-(def ^:const Movied-Premanently 
+(def ^:const ^Integer Movied-Premanently 
   "301 - The URL of the requested resource has been changed permanently. 
    The new URL is given in the response"
   301)
 
-(def ^:const Bad-Request 
+(def ^:const ^Integer Bad-Request 
   "400 - The server could not understand the request due to invalid syntax." 
   400)
 
-(def ^:const Unathorized 
+(def ^:const ^Integer Unathorized 
   "401 - Although the HTTP standard specifies 'unauthorized', semantically this response means 'unauthenticated'. 
    That is, the client must authenticate itself to get the requested response."
   401)
 
-(def ^:const Not-Found  
+(def ^:const ^Integer  Not-Found  
   "404 - In an API, this can also mean that the endpoint is valid but the resource itself does not exist. 
    Servers may also send this response instead of 403 to hide the existence of a resource from an unauthorized client. "
   404
   )
 
-(def ^:const Forbiden 
+(def ^:const ^Integer Forbiden 
   "403 - The client does not have access rights to the content; that is, it is unauthorized, 
    so the server is refusing to give the requested resource. 
    Unlike 401, the client's identity is known to the server" 
   403)
 
 
-(def ^:const  Method-Not-Allowed 
+(def ^:const ^Integer  Method-Not-Allowed 
   "405 - The request method is known by the server but is not supported by the target resource. 
    For example, an API may forbid DELETE-ing a resource"
   405)
 
-(def ^:const Not-Acceptable 
+(def ^:const ^Integer Not-Acceptable 
   "406 - This response is sent when the web server, after performing server-driven content negotiation, 
    doesn't find any content that conforms to the criteria given by the user agen" 
   406 )
 
-(def ^:const Internal-Server-Error 
+(def ^:const ^Integer Internal-Server-Error 
   "500 The server has encountered a situation it doesn't know how to handle." 
   500 )
 

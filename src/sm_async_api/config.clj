@@ -116,22 +116,22 @@
       (let [workers  (yaml/from-file workers-file)
             db (yaml/from-file db-file)
             base (yaml/from-file base-file)
-            globals (yaml/from-file globals-file) ]
-        (when (and (some? workers) (some? base) (some? db) )
+            globals (yaml/from-file globals-file)]
+        (when (and (some? workers) (some? base) (some? db))
           (reset! keystore (yaml/from-file keystore-file))
           (var-set local-config* (-> {} (assoc :workers (decoder workers))
                                      (assoc :config (decoder base))
                                      (assoc :database (decoder db))
-                                     (assoc :executors-globals 
+                                     (assoc :executors-globals
                                             (if (some? globals) globals {}))))
           (with-open [w (io/writer  keystore-file)]
-            (.write w (yaml/generate-string  @keystore)))
+            (.write w  (yaml/generate-string  @keystore)))
           (with-open [w (io/writer  workers-file)]
             (.write w (yaml/generate-string (password-remover workers))))
           (with-open [w (io/writer  base-file)]
-            (.write w (yaml/generate-string (password-remover base))))
-           (with-open [w (io/writer  db-file)]
-             (.write w (yaml/generate-string (password-remover db))))
+            (.write w  (yaml/generate-string (password-remover base))))
+          (with-open [w (io/writer  db-file)]
+            (.write w  (yaml/generate-string (password-remover db))))
           (var-get local-config*))))))
 
 (defn- fill-workers [workers]
@@ -166,10 +166,10 @@
 (defn create-uid-generator [_config]
   (assoc  _config  :get-unique-id
           (let [i (atom 0)
-              module-name (-> _config  :config :async_gateway_id)]
+                module-name (-> _config  :config :async_gateway_id)]
             (fn  []
-              (format "%X-%X-%s" 
-                      (quot (System/currentTimeMillis) 1000) 
+              (format "%X-%X-%s"
+                      (quot (System/currentTimeMillis) 1000)
                       (swap! i inc)
                       module-name)))))
 
@@ -179,22 +179,22 @@
           (when-let [_config (read-config
                               (if (empty? path) default-conf-path path))]
             (-> _config
+                (assoc :path path)
                 fill-config-defaults
                 calc-config-defaults
                 configure-workers
-                create-uid-generator
-                ))))
+                create-uid-generator))))
 
 
 
 
 #_(defn old_configure [path]
-  (reset! config
-          (configure-workers
-           (calc-config-defaults
-            (fill-config-defaults
-             (read-config
-              (if (empty? path) default-conf-path path)))))))
+    (reset! config
+            (configure-workers
+             (calc-config-defaults
+              (fill-config-defaults
+               (read-config
+                (if (empty? path) default-conf-path path)))))))
 
 (defmacro get-config
   ([]  `(@sm_async_api.config/config :config))
@@ -205,13 +205,18 @@
   ([key] `(-> @sm_async_api.config/config :workers ~key)))
 
 
-(defmacro get-executors-globals 
+(defmacro get-messangers
+  ([]  `(@sm_async_api.config/config :workers))
+  ([key] `(-> @sm_async_api.config/config :workers ~key)))
+
+
+(defmacro get-executors-globals
   ([]  `(@sm_async_api.config/config :executors-globals))
   ([key] `(-> @sm_async_api.config/config :executors-globals ~key)))
 
 (defmacro get-module-name [] `(-> @sm_async_api.config/config :config :async_gateway_id))
 
-(defmacro get-uid []  `(( @sm_async_api.config/config  :get-unique-id)))
+(defmacro get-uid []  `((@sm_async_api.config/config  :get-unique-id)))
 
 
 ;(defn set-module-name [name] (reset! module_name name))

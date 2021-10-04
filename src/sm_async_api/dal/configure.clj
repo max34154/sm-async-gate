@@ -4,22 +4,40 @@
             [clojure.java.jdbc :as jdbc]
             [sm_async_api.validate]
             [clojure.string :as str]
+            [yaml.core :as yaml]
             [sm_async_api.config :as config]
-            [sm_async_api.dal.globals :refer [db user-action task-action request-action]]
+            [clojure.core.async :as a]
+            [sm_async_api.dal.globals :refer [db
+                                              user-action
+                                              task-action
+                                              hook-action
+                                              request-action]]
             [sm_async_api.dal.user :as dal-u]
             [sm_async_api.dal.task :as dal-t]
             [sm_async_api.dal.request :as dal-r]
+            [sm_async_api.dal.hook :as dal-h]
+            [clojure.java.io :as io]
             [taoensso.timbre :as timbre
              :refer [;log  trace  debug  info  warn  error  fatal  report
                      ;logf tracef debugf infof warnf errorf fatalf reportf
                      ;spy get-env
-                     debug fatal report]]
-            #_[taoensso.timbre.appenders.core :as appenders]))
+                     debug fatal report reportf errorf]]
+            #_[taoensso.timbre.appenders.core :as appenders])
+  (:import [java.io File]))
 
 
-(def ^:private db_tables {"ATTACHMENT" 1  "REQUEST" 10  "RESPONCE" 100 "USER" 1000})
+(def ^:private db_tables {"ATTACHMENT" 1
+                          "REQUEST" 10
+                          "RESPONCE" 100
+                          "USER" 1000
+                          "HOOK" 10000
+                          "MESSAGE" 100000})
 
-(def ^:private db_correct_value 1111)
+(def ^:private db_correct_value 111111)
+
+(def ^:privat ^Integer min-cleaner-period 10000)
+
+(def ^:privat ^Integer default-clean-delay 600000)
 
 (defmulti ^:private open-db (fn [db-config] (:db-type  db-config)))
 
@@ -111,22 +129,59 @@
     (execute-script (db-setup db-config)))
   (report "DB configured."))
 
-#_(defn- agent-waiting [agt f limit  message]
-  (send agt f)
-  (when (some? message) (print message))
-  (loop [x 0]
-    (Thread/sleep 20)
-    (when (some? message) (print "."))
-    (when (nil? @agt)
-      (if (> x limit)
-        (throw (AssertionError. (str "Waiting limit %s exceeded for agent" agt)))
-        (recur (inc x)))))
-  (when (some? message) (print "\n"))
-  (debug "Completed:" @agt))
+(defn reload-hook-templates
+  ([db-config path] (reload-hook-templates db-config path false))
+  ([db-config path force-reload?]
+   (when (or (true? force-reload?)
+             (and (= (:db-type db-config) "h2")
+                  (= (:h2-protocol db-config) "mem")))
+     (try
+       (let [add-hook (:update-or-insert-template @hook-action)]
+         (reportf "%d hooks loaded" (reduce (fn [count hook]
+                                              (add-hook hook) (inc count)) 0 (yaml/from-file (str path "hook.yml")))))
+       (catch Exception e (ex-message e)
+              (errorf "Hooks are not loaded. Error: %s" e))))))
 
+(defn unload-hook-template [path]
+   ;(.exists (io/file (str path "hook.bkp"))
+  (let [backup-file  (str path "hook.bkp")
+        work-file (str path "hook.yml")]
+    (io/delete-file backup-file true)
+    (.renameTo (File. work-file) (File. backup-file))
+    (with-open [work-file (io/writer work-file)]
+      (.write work-file (yaml/generate-string
+                         ((@hook-action :get-all-templates)))))))
+
+
+(defn cleaner-start []
+  (reportf "Cleaner started. Cleaning period is %s, delays is %s"
+           (-> @config/config :database :db-clean-period)
+           (-> @config/config :database :db-clean-delay))
+  (a/thread
+    (let [{:keys [db-clean-period db-clean-delay]} (:database @config/config)
+          db-clean-delay (if (pos-int? db-clean-delay) db-clean-delay default-clean-delay)]
+      (loop [x db-clean-period]
+        (when (pos-int? x)
+          (if (< x min-cleaner-period)
+            (Thread/sleep min-cleaner-period)
+            (Thread/sleep x))
+          ((request-action :cleanup) db-clean-delay)
+          (recur (->  @config/config :database :db-clean-period))))
+      (report "Cleaner exited."))))
+
+(defn cleaner-reconfigure-period
+  [^Integer new-period]
+  (swap! @config/config update-in [:database :db-clean-period] (fn [_]  new-period)))
+
+(defn cleaner-reconfigure-delay
+  [^Integer new-delay] {:pre [(pos-int? new-delay)]}
+  (swap! @config/config update-in [:database :db-clean-delay] (fn [_]  new-delay)))
+
+(defn cleaner-stop [] (cleaner-reconfigure-period 0))
 
 (defn configure-database []
-  (let [db-config (:database @config/config)]
+  (let [db-config (:database @config/config)
+        path (:path  @config/config)]
     (debug "Db config " db-config)
     (try
       (when (some? db-config)
@@ -136,7 +191,31 @@
         (send user-action (fn [_] (dal-u/configure db-config)))
         (send task-action (fn [_] (dal-t/configure db-config)))
         (send request-action (fn [_] (dal-r/configure db-config)))
-        (when-not (await-for 10000 user-action task-action request-action) (throw (AssertionError. "DB functions configuration error"))))
+        (send hook-action (fn [_] (dal-h/configure db-config)))
+        (when-not (await-for 10000 user-action task-action request-action hook-action)
+          (throw (AssertionError. (str "DB functions configuration error "
+                                       "user action " @user-action
+                                       "task-action " @task-action
+                                       "request-action " @request-action
+                                       "hook-action " @hook-action))))
+        (when (pos-int? (db-config :db-clean-period))
+          (cleaner-start)))
+      ((@task-action :clear-locks))
+      (reload-hook-templates db-config path)
       (catch Exception e (ex-message e)
-             (fatal "Database configuratopn error " e)
+             (fatal "Database configuration error " e)
+             (println "!!!!!Stack trace:")
+             (clojure.stacktrace/print-stack-trace e)
              -1))))
+
+(defn stop-database []
+  (let [db-config (:database @config/config)
+        path (:path  @config/config)]
+    (when (and (= (:db-type db-config) "h2")
+               (= (:h2-protocol db-config) "mem"))
+      (try
+        (reportf "Hooks unload required.")
+        (unload-hook-template path)
+        (reportf "Hooks unloaded.")
+        (catch Exception e (ex-message e)
+               (errorf "Hooks are not unloaded. Error: %s" e))))))

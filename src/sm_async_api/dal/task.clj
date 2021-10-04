@@ -1,6 +1,6 @@
 (ns sm_async_api.dal.task
   (:require [clojure.java.jdbc :as jdbc]
-            ;[clojure.spec.alpha :as s]
+            [clojure.string :as str]
              ;[taoensso.timbre.appenders.core :as appenders]
             [sm_async_api.validate]
             [sm_async_api.config :as config]
@@ -17,11 +17,13 @@
 (def ^:private _default_lock_chunk_size 10)
 
 
-(defmulti ^:private lock-task-sql-sch (fn [db-config] (:db-type  db-config)))
 
 ;; 
 ;; Database type dependend. Please add methods for each supported db 
 ;; 
+
+(defmulti ^:private lock-task-sql-sch (fn [db-config] (:db-type  db-config)))
+
 (defmethod lock-task-sql-sch :default [db-config]
   (throw (IllegalArgumentException.
           (str "Unsupported database type " (:db-type  db-config) "."))))
@@ -39,6 +41,8 @@
   (throw (IllegalArgumentException.
           (str "Unsupported database type " (:db-type  db-config) "."))))
 
+
+
 ;; H2 methods 
 (defmethod lock-task-sql-sch "h2" [{:keys [^String db-schema]}]
   (str "UPDATE "  db-schema ".REQUEST"
@@ -54,6 +58,8 @@
   (str "UPDATE " db-schema ".REQUEST"
        " SET status='L',lock_time=?,locked_by=?"
        " WHERE  (status='N' or status = '') and next_run < SYSDATE and %s limit ?"))
+
+
 ;; H2 methods END 
 
 
@@ -109,8 +115,9 @@
 
 (defn get-tasks-factory
   "Select tasks locked for worker"
-  [{:keys [^String db-schema]}]
-  (let [sql (str "SELECT " g/task-field-list " FROM "
+  [db-config]
+  (let [db-schema (:db-schema db-config )
+        sql (str "SELECT "(g/task-field-list db-config)" FROM "
                  db-schema ".REQUEST LEFT JOIN " db-schema ".RESPONCE"
                  " ON REQ_ID=RES_REQ_ID "
                  " WHERE  (RES_REQ_ID is NULL or finished='f') and status='L' and locked_by=?")]
@@ -118,9 +125,9 @@
       (jdbc/query   @db [sql locker]))))
 
 
-(defn-  get-tasks-on-time-sql [{:keys [^String db-schema]}]
-  (str "SELECT " g/task-field-list
-       " FROM " db-schema ".REQUEST"
+(defn-  get-tasks-on-time-sql [db-config]
+  (str "SELECT " (g/task-field-list db-config)
+       " FROM " (:db-schema db-config) ".REQUEST"
        " WHERE  lock_time=? and status='L' and locked_by=?"))
 
 (defn task-reader-factory
@@ -133,10 +140,10 @@
     (fn [^String pusher-id ^Integer chunk_size ^String condition]
       (let [lock-time (unixtime->timestamp (tod))]
         (jdbc/with-db-transaction [t-con @db]
-          (when (< 0  (jdbc/execute! t-con [(format lock-sql condition)
+          (when (< 0  (first (jdbc/execute! t-con [(format lock-sql condition)
                                             lock-time
                                             pusher-id
-                                            chunk_size]))
+                                            chunk_size])))
             (jdbc/query   t-con [get-sql  lock-time pusher-id])))))))
 
 (defn- reschedule-task-sql [{:keys [^String db-schema]}]

@@ -16,7 +16,7 @@
    [taoensso.timbre.appenders.core :as appenders]
    [sm_async_api.task.writers :as tw]
    [sm_async_api.task.sync_pusher :as sp]
-   [sm_async_api.dal :as dal]))
+   [sm_async_api.dal.task :as dal-t]))
 
 ;(timbre/merge-config! {:appenders  {:println {:enabled? true}}})
 ;(timbre/merge-config!  {:appenders {:spit (appenders/spit-appender {:fname "log/dispatcher.log"})}})
@@ -123,45 +123,43 @@
           (go
             (loop [input (<! in)
                    retries 0]
-              (_case input
-                     nil   (exit-thread id) ;(log (format  "Channel is closed.Thread %s exited " id))
+              (if (string? input)
+                (if (= input fetch-marker)
+                  (do (>! out  fetch-marker) (recur  (<! in) 0))
+                  (exit-thread id)) ; exit on any string exept "FETCH"
 
-                     command-exit (exit-thread id)
+                (do (debug  id ":Run task:"  (input :req_id) "Retry:" retries)
+                    (let [result-code  (sp/processor (if async?
+                                                       (do (pusher input id write-channel-callback)
+                                                           (<! local-channel))
+                                                       (pusher input id)) id)]
+                      (debug  id ":Task:"  (input :req_id) "result code " result-code)
+                      (_case  result-code
 
-                     fetch-marker (do (>! out  fetch-marker) (recur  (<! in) 0))
+                              tr/NEXT-ACTION (recur (<! in) 0)
 
-                     (do (debug  id ":Run task:"  (input :req_id) "Retry:" retries)
-                         (let [result-code  (sp/processor (if async?
-                                                            (do (pusher input id write-channel-callback)
-                                                                (<! local-channel))
-                                                            (pusher input id)) id)]
-                           (debug  id ":Task:"  (input :req_id) "result code " result-code)
-                           (_case  result-code
+                              tr/RETRY-ACTION (if (> max-retry-count retries)
+                                                (do
+                                                  (debug id ":Task" (input :req_id) "retry " retries " delay started.")
+                                                  (<! (timeout (* max-retry-waiting (rand))))
+                                                  (recur input (inc retries)))
+                                                (do
+                                                  (warn id ":Retry count exceeded for " (input :req_id) ".Action rescheduled")
+                                                  (@tw/action-rescheduler  (input :req_id) nil nil)
+                                                  (recur (<! in) 0)))
 
-                                   tr/NEXT-ACTION (recur (<! in) 0)
+                              tr/SERVER-NOT-AVAILABLE (do
+                                                        (warnf "%s Server not available. Action %s rescheduled. Sleep for %sms"
+                                                               id (input :req_id) server-not-available-waiting)
+                                                        (@tw/action-rescheduler  (input :req_id) nil nil)
+                                                        (<! (timeout server-not-available-waiting))
+                                                        (recur (<! in) 0))
 
-                                   tr/RETRY-ACTION (if (> max-retry-count retries)
-                                                     (do
-                                                       (debug id ":Task" (input :req_id) "retry " retries " delay started.")
-                                                       (<! (timeout (* max-retry-waiting (rand))))
-                                                       (recur input (inc retries)))
-                                                     (do
-                                                       (warn id ":Retry count exceeded for " (input :req_id) ".Action rescheduled")
-                                                       (@tw/action-rescheduler  (input :req_id) nil nil)
-                                                       (recur (<! in) 0)))
+                              tr/EXIT-THREAD  (exit-thread id)
 
-                                   tr/SERVER-NOT-AVAILABLE (do
-                                                             (warnf "%s Server not available. Action %s rescheduled. Sleep for %sms"
-                                                                    id (input :req_id) server-not-available-waiting)
-                                                             (@tw/action-rescheduler  (input :req_id) nil nil)
-                                                             (<! (timeout server-not-available-waiting))
-                                                             (recur (<! in) 0))
-
-                                   tr/EXIT-THREAD  (exit-thread id)
-
-                                   (do (error id ":Unknow processor responce for  " input)
-                                       (recur (<! in) 0)))))))
-            (when (some? local-channel) (close! local-channel))))))))
+                              (do (error id ":Unknow processor responce for  " input)
+                                  (recur (<! in) 0))))))))
+          (when (some? local-channel) (close! local-channel)))))))
 
 
 (defn build-exclude-list []
@@ -176,17 +174,17 @@
     :user-mode
     (when-not (empty? name)
       (if (string? name)
-        (dal/user-lock-conditions name)
-        (dal/user-list-conditions (str/join "','" name))))
+        (dal-t/user-lock-condition name)
+        (dal-t/user-list-conditions (str/join "','" name))))
 
     :global-mode
     (let [exclude-list (build-exclude-list)]
       (when-not (empty? exclude-list)
         (if (= exclude-list :not-configured)
-          dal/global-lock-condition-global-only
-          (dal/global-lock-condition exclude-list))))
+          dal-t/global-lock-condition-global-only
+          (dal-t/global-lock-condition exclude-list))))
 
-    :async-mode dal/async-lock-condition
+    :async-mode dal-t/async-lock-condition
 
     nil))
 
@@ -204,7 +202,7 @@
     task-buffer (chan  channel-size)
     reader-control (chan (sliding-buffer 2))
     condition  (build-condition params)
-    global-id (str (config/get-config :async_gateway_id) "-" local-id)]
+    global-id (str (config/get-config :async_gateway_id) "::T-" local-id)]
     (if (nil? condition)
       (fatal "Incorrect condition for pusher %s. Supplied parameters %s. Pusher skipped."
              global-id params)
@@ -233,19 +231,19 @@
 
 (defn run-dedicated-pusher [{:keys [name threads chank-size get-allowed]}
                             pusher-factory task-executor
-                            config workers]
+                            config workers database]
   (run-pusher {:mode :user-mode
                :name  name
                :threads threads
                :chank-size chank-size}
               (if (string? name) (str "D::" name) (str "L::" (name 0)))
-              dal/task-reader
+              (dal-t/task-reader-factory database)
               (pusher-factory :user-mode get-allowed config workers)
               task-executor))
 
 
 (defn pusher-manager-run  []
-  (let [{:keys [workers config]}  @config/config
+  (let [{:keys [workers config database]}  @config/config
         pusher-factory (sp/get-pusher-factory (config  :async-pusher-enabled))
         task-executor  (task-executor-fabric (config  :async-pusher-enabled))]
     ;(send tw/result-writer tw/get-result-writer) ;replaced with delay in writer
@@ -259,13 +257,14 @@
                              (repeat pusher-factory)
                              (repeat task-executor)
                              (repeat config)
-                             (repeat workers))))
+                             (repeat workers)
+                             (repeat database))))
              (when (workers :global-enabled)
                (run-pusher {:mode :global-mode
                             :threads (workers :global-threads)
                             :chank-size (workers :global-chank-size)}
                            "G::Global"
-                           dal/task-reader
+                           (dal-t/task-reader-factory database)
                            (pusher-factory :global-mode (workers :global-get-allowed) config workers)
                            task-executor))
              (when (workers :async-enabled)
@@ -273,7 +272,7 @@
                             :threads (workers :async-threads)
                             :chank-size (workers :async-chank-size)}
                            "A::Async"
-                           dal/task-reader
+                           (dal-t/task-reader-factory database)
                            (pusher-factory :global-mode false config workers)
                            task-executor)))))
   (info "Pushers are configured."))
@@ -315,8 +314,13 @@
 (defn- count-threads [total [_ {:keys [threads]}]]
   (if (nil? threads) total (+ total threads)))
 
-(defn shatdown-pushers
-  ([] (shatdown-pushers 10))
+(defn start-pushers []
+  (if (some? pusher-manager-run)
+    (pusher-manager-do-all pusher-manager-kick)
+    1))
+
+(defn stop-pushers
+  ([] (stop-pushers 10))
   ([max-wait-time]
    (pusher-manager-do-all pusher-manager-kill-reader)
    (loop [t  max-wait-time]

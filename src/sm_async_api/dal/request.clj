@@ -5,11 +5,12 @@
             [sm_async_api.validate]
             [sm_async_api.config :as config]
             [sm_async_api.dal.globals :as g :refer [db]]
+            [sm_async_api.utils.macro :refer [tod unixtime->timestamp]]
             [taoensso.timbre :as timbre
              :refer [;log  trace  debug  info  warn  error  fatal  report
                      ;logf tracef debugf infof warnf errorf fatalf reportf
                      ;spy get-env
-                     error spy]]
+                     error ]]
             [taoensso.timbre.appenders.core :as appenders])
   (:import [java.sql SQLException]))
 
@@ -66,16 +67,48 @@
                   [(str "SELECT RES_REQ_ID, STRINGDECODE(result) as result, close_time FROM " result "WHERE RES_REQ_ID=?")
                    (-> req :route-params :action_id)]))))
 
+
+
+(defmulti ^:private full-action-field-list (fn [db-config] (:db-type  db-config)))
+
+(defmethod full-action-field-list :default [db-config]
+  (throw (IllegalArgumentException.
+          (str "Unsupported database type " (:db-type  db-config) "."))))
+
+
+
+
+
+
 (defn get-action-factory 
   "Get action and result by id in request structure {:route-params {:action_id id}}"
-  [{:keys [db-schema]}]
-  (let [request  (str db-schema ".REQUEST")
-        result  (str db-schema ".RESPONCE")]
+  [db-config]
+  (let [db-schema (:db-schema db-config)
+        sql (str "SELECT " (g/full-action-field-list db-config) 
+                 " FROM " db-schema ".REQUEST"
+                 " LEFT JOIN " db-schema ".RESPONCE" 
+                 " ON REQ_ID=RES_REQ_ID "
+                 " WHERE REQ_ID=?")]
     (fn   [req]
       (jdbc/query @db
-                  [(str "SELECT " g/full-action-field-list " FROM " request
-                        " LEFT JOIN " result " ON REQ_ID=RES_REQ_ID "
-                        " WHERE REQ_ID=?") (-> req :route-params :action_id)]))))
+                  [sql (-> req :route-params :action_id)]))))
+
+
+(defn cleanup-excuted-factory
+  "Remove all executed or expired request after specified delay"
+  [{:keys [^String db-schema]} ]
+  (fn [ delay ] {:pre [(pos-int? delay)]}
+    (let [offset (unixtime->timestamp (- (tod) delay))]
+    (jdbc/execute!  @db
+                    [(str "DELETE FROM " db-schema ".REQUEST  "
+                         "WHERE STATUS='E' and  next_run < ? " offset) ]
+                    
+    (jdbc/execute!  @db  [(str "DELET FROM " db-schema ".REQUEST  "
+                              "WHERE req_id in "
+                              "(SELECT req_id FROM " db-schema ".REQUEST"
+                              " LEFT JOIN " db-schema ".RESPONCE ON REQ_ID=RES_REQ_ID "
+                              " WHERE finished='f' and close_time < ? " ) 
+                          (unixtime->timestamp (+ (tod) delay))] ) ))))
 ;;
 ;;  For tests and not massive usage 
 ;;  due to execute factory faction every run 
@@ -112,7 +145,8 @@
    :cancel (cancel-action-factory db-config)
    :run  (run-action-factory db-config)
    :get-result (get-result-factory db-config)
-   :get (get-action-factory db-config)})
+   :get (get-action-factory db-config)
+   :cleanup (cleanup-excuted-factory db-config)})
 
 
 

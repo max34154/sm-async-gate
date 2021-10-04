@@ -241,7 +241,7 @@
                  ["Action/" :action_id "/result"] {:get (get-action-result-factory)}
                  ["Action/" :action_id "/cancel"] {:put (cancel-action-factory)}
                  ["Action/" :action_id "/attachments"]  (attachments-factory)
-                 ["Action/" :action_id "/run"] {:put (run-action-factory)}
+                 ["Action/" :action_id "/run"] {:post (run-action-factory)}
                  ["Action/" :action_id "/" :attachment_id] {:get (get-attachment-factory)}
                  ["Debug/"] debug-print-request}
 

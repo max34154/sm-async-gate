@@ -1,6 +1,10 @@
 
 (ns sm_async_api.enum.task_result)
 
+;;  Task queue managment codes
+;; 
+;;
+
 (def ^:const NEXT-ACTION  "0 - Get next action from channel and execute."  0)
 
 (def ^:const RETRY-ACTION  "1 - Execute current action again."  1)
