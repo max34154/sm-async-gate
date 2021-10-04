@@ -232,8 +232,8 @@
               "\"MS\": " (insert_tag "MS") ","
               "\"STATUS\": " (insert_tag "STATUS") ","
               "\"FullBody\":" (insert_tag "BODY")  "}")
-   :max_retries  1
-   :retry_interval 1})
+   :max_retries  10
+   :retry_interval 11})
 
 (defn decode-message [message]
   (-> message
@@ -251,7 +251,6 @@
 (defn get-STATUS [message]  ((message :body) "STATUS"))
 
 (defn get-FullBody [message] 
- (println "FullBody " ((message :body) "FullBody"))
   ((message :body) "FullBody"))
 
 (def post-message-request {:body {:status 200
@@ -267,6 +266,8 @@
           message (decode-message (first messages))]
       (is (= 200 (get-STATUS message)))
       (is (= 0 (get-RC message)))
+      (is (= (hook-parametric :max_retries) (message :attempt)))
+      (is (= (hook-parametric :retry_interval) (message :retry_interval)))
       (is (= ["It's OK"] (get-MS message)))
       (is (=  (json/parse-string (-> post-message-request :body :parameters))  (get-FullBody message)))
       (is g/default-sm-user-name (get-user-name message)))))

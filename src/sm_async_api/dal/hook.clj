@@ -91,6 +91,7 @@
        "STRINGDECODE(BODY) AS BODY,"
        "URL,"
        "MAX_RETRIES,"
+       "RETRY_INTERVAL, "
        "METHOD "
        " FROM " db-schema ".HOOK WHERE NAME=? and "
        "(USER_NAME='" hook-global-user-name "' or USER_NAME=?) "
