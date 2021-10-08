@@ -1,35 +1,18 @@
-#_{:clj-kondo/ignore [:unused-referred-var]}
 (ns sm_async_api.task.process_result
   (:require
-   [sm_async_api.enum.sm :as sm]
-   [clojure.string :as s]
    [cheshire.core :as json]
-   [sm_async_api.utils.macro :refer [_case]]
-   [sm_async_api.http_errors :as http-errors]
+   [clojure.string :as s]
+   [sm_async_api.config :as config]
    #_{:clj-kondo/ignore [:refer-all]}
    [sm_async_api.enum.process_result :refer :all]
+   [sm_async_api.enum.sm :as sm]
+   [sm_async_api.http_errors :as http-errors]
    [sm_async_api.task.writers :as tw]
    [sm_async_api.task.attachment :as attachments]
-   [sm_async_api.config :as config]
+   [sm_async_api.utils.macro :refer [_case]]
    [taoensso.timbre.appenders.core :as appenders]
    [taoensso.timbre :as timbre
-    :refer [log  trace  debug  info  warn  error  fatal  report
-            logf tracef debugf infof warnf errorf fatalf reportf
-            spy get-env]]))
-
-#_(def ^:const ^Integer OK  0)
-
-#_(def  ^:const ^Integer  TOO-MANY-THREADS 1)
-
-#_(def  ^:const ^Integer  SERVER-NOT-AVAILABLE 2)
-
-#_(def  ^:const ^Integer  NOT-ATHORIZED 3)
-
-#_(def  ^:const ^Integer ERROR 4)
-
-
-
-
+    :refer [debug warn fatal errorf]]))
 
 (defmacro ^:private tread-details
   ([opts] `(format "Thread:%s,Mode:%s,User:%s,RecID:%s,Url:%s"
@@ -74,9 +57,19 @@
                         (build-attachment-url subject service mode body-json)
                         (get headers "Authorization"))))
 
+
+(defn- get-jbody [body headers]
+  (when (s/includes? (:content-type headers) "application/json")
+    (try (json/parse-string body)
+         (catch Exception e
+           (errorf "Error %s on parsing json %s "  (ex-message e) body)))))
+
+(defmacro get-RC [body headers]
+  `(get (get-jbody ~body ~headers) "ReturnCode"))
+
+
 (defn process-http-ok [body headers status opts]
-  (let [body-json (when (s/includes? (headers :content-type) "application/json")
-                    (json/parse-string body))]
+  (let [body-json (get-jbody body headers)]
     (if (= (get body-json "ReturnCode") sm/RC_SUCCESS)
       (log-error
        (copy-attachments
@@ -84,11 +77,6 @@
       (log-error (@tw/action-rescheduler  (opts :rec-id) body status) opts body)))
   OK)
 
-(defmacro get-jbody [body headers]
-  `(when (s/includes? (~headers :content-type) "application/json") (json/parse-string ~body)))
-
-(defmacro get-RC [body headers]
-  `(get (get-jbody ~body ~headers) "ReturnCode" ))
 
 (defn process
   "Process responce from SM. 
@@ -120,90 +108,52 @@
         ERROR)
       (_case (long status)
              http-errors/OK    (process-http-ok body headers status opts)
-             #_(do ; - just in case of http success and error in error code 
-                 (let [body-json (when (s/includes? (headers :content-type) "application/json")
-                                   (json/parse-string body))
-                       writed-res
-                       (if (= (get body-json "ReturnCode") sm/RC_SUCCESS)
-                         (@tw/result-writer (opts :rec-id) body status)
-                         (@tw/action-rescheduler  (opts :rec-id) body status))]
-                   (debug (:thread opts) ":" (:rec-id opts) " write result " writed-res)
-                   (when (string? writed-res)
-                     (timbre/error (tread-details  "Write error in status http-errors/OK"
-                                                   opts
-                                                   (str "Responce body " body)))))
-                 OK)
 
-             http-errors/Unathorized (let [jbody 
-                                           (when (s/includes? (headers :content-type) "application/json") (json/parse-string body))]
+             http-errors/Unathorized (let [jbody (get-jbody body headers)]
                                        (if  (= (get jbody "ReturnCode") sm/RC_WRONG_CREDENTIALS)
                                          (if (and (some? (jbody "Messages"))
                                                   (s/includes? ((jbody "Messages") 0) "Not Authorized"))
                                            (do
                                              (timbre/error "Not Authorized. Write the answer. Body:"  body)
-                                             (when (string? (@tw/result-writer (opts :rec-id) body status))
-                                               (timbre/error (tread-details "Write error in status http-errors/Unathorized"
-                                                                            opts
-                                                                            (str "Responce body " body))))
+                                             (log-error (@tw/result-writer (opts :rec-id) body status) opts body)
                                              NOT-ATHORIZED)
 
                                            (do
                                              (warn "Two many threads." (tread-details   opts))
                                              TOO-MANY-THREADS))
                                          (do
-                                           (when (string? (@tw/result-writer (opts :rec-id) body status))
-                                             (timbre/error (tread-details "Write error in status http-errors/Unathorized"
-                                                                          opts
-                                                                          (str "Responce body " body))))
+                                           (log-error (@tw/result-writer (opts :rec-id) body status) opts body)
                                            (timbre/error "Unkown athorization error:"  body)
                                            OK)))
 
-             http-errors/Not-Found  (if  (s/includes? (headers :content-type) "application/json")
-                                      (_case (get (json/parse-string body) "ReturnCode")
-                                             sm/RC_NO_MORE (do ; sm responce - has not requested item 
-                                                             (when (string? (@tw/result-writer (opts :rec-id) body status))
-                                                               (timbre/error (tread-details "Write error in status http-errors/Not-Found"
-                                                                                            opts
-                                                                                            (str "Responce body " body))))
-                                                             (timbre/error "Attempt to use incorrect service name:" body)
-                                                             OK)
-                                             nil (do ; ReturnCode is nil, most probably no SM
-                                                   (timbre/error (tread-details "SM not available - " opts "."))
-                                                   SERVER-NOT-AVAILABLE)
+             http-errors/Not-Found
+             (_case  (get-RC body headers)
+                     sm/RC_NO_MORE (do ; sm responce - has not requested item 
+                                     (log-error (@tw/result-writer (opts :rec-id) body status) opts body)
+                                     (timbre/error "Attempt to use incorrect service name:" body)
+                                     OK)
+                     nil (do ; ReturnCode is nil, most probably no SM
+                           (timbre/error (tread-details "SM not available - " opts "."))
+                           SERVER-NOT-AVAILABLE)
 
-                                             (do (warn (tread-details
-                                                        (format "Suspections combination of status 404 and ReturnCode %s"
-                                                                (get (json/parse-string body) "ReturnCode"))
-                                                        opts "."))
-                                                 TOO-MANY-THREADS ;cheat - this code reused to retry action 
-                                                 ))
-
-                                      (do ; content type not json
-                                        (timbre/error (tread-details "SM not available - " opts "."))
-                                        SERVER-NOT-AVAILABLE))
-
+                     (do (warn (tread-details
+                                (format "Suspections combination of status 404 and ReturnCode %s"
+                                        (get (json/parse-string body) "ReturnCode"))
+                                opts "."))
+                         TOO-MANY-THREADS ;cheat - this code reused to retry action 
+                         ))
              http-errors/Bad-Request  (do
-                                        (when (string?  (@tw/result-writer (opts :rec-id) body status))
-                                          (timbre/error (tread-details "Write error in status http-errors/Bad-Request"
-                                                                       opts
-                                                                       (str "Responce body " body))))
+                                        (log-error (@tw/result-writer (opts :rec-id) body status) opts body)
                                         OK)
 
              http-errors/Internal-Server-Error (do
-                                                 (when (string?
-                                                        (if (and (s/includes? (headers :content-type) "application/json")
-                                                                 (= (get (json/parse-string body) "ReturnCode") sm/RC_WRONG_CREDENTIALS))
-                                                          (@tw/action-rescheduler  (opts :rec-id) body status)
-                                                          (@tw/result-writer (opts :rec-id) body status)))
-                                                   (timbre/error (tread-details "Write error in status http-errors/Internal-Server-Error"
-                                                                                opts
-                                                                                (str "Responce body " body))))
+                                                 (log-error
+                                                  (if (= (get-RC body headers) sm/RC_WRONG_CREDENTIALS)
+                                                    (@tw/action-rescheduler  (opts :rec-id) body status)
+                                                    (@tw/result-writer (opts :rec-id) body status)) opts body)
                                                  OK)
 
              (do
                (timbre/error (tread-details (format "UnSuccess. Status %s. Server error in " status) opts "."))
-               (when (nil? (@tw/result-writer (opts :rec-id) body status))
-                 (timbre/error (tread-details "Write error in unknown status"
-                                              opts
-                                              (str "Responce body " body))))
+               (log-error (@tw/result-writer (opts :rec-id) body status) opts body)
                OK)))))
