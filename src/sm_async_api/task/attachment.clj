@@ -5,6 +5,7 @@
    [clojure.string :as s]
    [cheshire.core :as json]
    [sm_async_api.utils.macro :refer [_case]]
+   [sm_async_api.utils.sm_resp_decode :as sm-decode :refer [get-RC get-jbody]]
    [sm_async_api.config :refer [get-executors-globals config]]
    [sm_async_api.dal.attachment :as dal-a]
    [sm_async_api.http_errors :as http-errors]
@@ -19,7 +20,7 @@
 
 (def  fast-attachment-copy  "fast")
 
-(def get-attachments-by-req-id (delay (dal-a/get-attachments-by-req-id-factory (:database @config))))
+(def get-attachments-by-req-id (delay (dal-a/get-attachments-by-req-id-factory (:database @config) (get-executors-globals :attachment-copy-mode))))
 
 (def get-attachment-body-by-id (delay (dal-a/get-attachment-body-by-id-factory (:database @config))))
 
@@ -44,34 +45,35 @@
                            "Authorization" authorization}
                  :body body})))
 
-(def ^:private message-not-found "$s:request not found. Request %s attachment %s. Responce: status %s, body %s")
+(def ^:private message-not-found "%s:request not found. Request %s attachment %s. Responce: status %s, body %s")
 
-(def ^:private message-srv-not-available  "$s:sm server not available. Request %s attachment %s. Responce: status %s, body %s")
+(def ^:private message-srv-not-available  "%s:sm server not available. Request %s attachment %s. Responce: status %s, body %s")
 
-(def ^:private message-susp-status-and-RC  "$s:suspections combination of status and RC. Request %s attachment %s. Responce: status %s, body %s")
+(def ^:private message-susp-status-and-RC  "%s:suspections combination of status and RC. Request %s attachment %s. Responce: status %s, body %s")
 
-(def ^:private message-not-authorized  "$s:not authorized. Request %s attachment %s. Responce: status %s, body %s" )
-(def ^:private message-gen-error "$s:general error. Request %s attachment %s. Responce: status %s, body %s")
+(def ^:private message-not-authorized  "%s:not authorized. Request %s attachment %s. Responce: status %s, body %s")
 
-(defn- proccess-http-not-found [thread rec-id content-type att-id status body]
-  (if  (s/includes? content-type "application/json")
-    (_case (get (json/parse-string body) "ReturnCode")
-           sm/RC_NO_MORE (do ; sm responce - has not requested item, possible reason deleted 
+(def ^:private message-gen-error "%s:general error. Request %s attachment %s. Responce: status %s, body %s")
+
+
+
+(defn- proccess-http-not-found [thread rec-id headers att-id status body]
+
+  (_case (get-RC body headers)
+         sm/RC_NO_MORE (do ; sm responce - has not requested item, possible reason deleted 
                                                                ; or not exitst request  
-                           (timbre/errorf message-not-found thread rec-id att-id status body)
-                           pr/NOT-ATHORIZED) ;; cancel other action with this attachments set
-           nil (do ; ReturnCode is nil, most probably no SM
-                 (timbre/errorf message-srv-not-available  thread rec-id att-id status body)
-                 pr/SERVER-NOT-AVAILABLE)
+                         (timbre/errorf message-not-found thread rec-id att-id status body)
+                         pr/NOT-ATHORIZED) ;; cancel other action with this attachments set
+         nil (do ; ReturnCode is nil, most probably no SM
+               (timbre/errorf message-srv-not-available  thread rec-id att-id status body)
+               pr/SERVER-NOT-AVAILABLE)
 
-           (do (timbre/warnf message-susp-status-and-RC  thread rec-id att-id status body)
-               pr/TOO-MANY-THREADS )) ;cheat - this code reused to retry action
-    (do ; content type not json
-      (timbre/errorf message-srv-not-available  thread rec-id att-id status body)
-      pr/SERVER-NOT-AVAILABLE)))
+         (do (timbre/warnf message-susp-status-and-RC  thread rec-id att-id status body)
+             pr/TOO-MANY-THREADS))) ;cheat - this code reused to retry action
 
-(defn- process-http-unathorized [thread rec-id  att-id  body]
-  (let [jbody (json/parse-string body)]
+
+(defn- process-http-unathorized [thread rec-id  att-id  body headers]
+  (let [jbody (get-jbody body headers)]
     (if  (= (get jbody "ReturnCode") sm/RC_WRONG_CREDENTIALS)
       (if (and (some? (jbody "Messages"))
                (s/includes? ((jbody "Messages") 0) "Not Authorized"))
@@ -86,9 +88,15 @@
         (timbre/errorf message-not-authorized  thread rec-id att-id http-errors/Unathorized body)
         pr/NOT-ATHORIZED))))
 
-(defn- process-http-delault [thread rec-id  att-id  body status]
+(defn- process-http-default [thread rec-id  att-id  body status]
   (timbre/errorf message-gen-error   thread rec-id att-id status body)
   pr/SERVER-NOT-AVAILABLE)
+
+(defn- process-http-OK [thread rec-id  att-id  body headers]
+  (when-not (= (get-RC body headers) sm/RC_SUCCESS)
+    (timbre/errorf "%s:copy error request %s attachment %s. Responce: status 200, body %s"
+                   thread, rec-id, att-id, body))
+  pr/OK)
 
 (defn process-http-responce
   "Process responce from SM. 
@@ -100,25 +108,22 @@
    !Unathorized 401! WRONG_C -4! 'Not Authorized'    !   W    ! NOT-ATHORIZED  
    !Unathorized 401! WRONG_C -4! not 'Not Authorized'!   -    ! TOO-MANY-THREADS
    !Unathorized 401! not -4    !      ANY            !   W    ! NOT-ATHORIZED
-   !Not-Found   404! NO_MORE  9!      ANY            !   W    ! pr/NOT-ATHORIZED             
+   !Not-Found   404! NO_MORE  9!      ANY            !   W    ! NOT-ATHORIZED             
    !Not-Found   404! not      9!      ANY            !   -    ! TOO-MANY-THREADS 
    !Not-Found   404! nil       !      ANY            !   -    ! SERVER-NOT-AVAILABLE 
    !ANY OTHER      ! ANY       !      ANY            !   W    ! OK
    "
   ^long [thread rec-id att-id {:keys [status  body headers]}]
-  (_case (long status)
 
-         http-errors/OK     (when-not (and (s/includes? (headers :content-type) "application/json")
-                                           (= (get (json/parse-string body) "ReturnCode") sm/RC_SUCCESS))
-                              (timbre/errorf "$s:copy error request %s attachment %s. Responce: status 200, body %s"
-                                             thread, rec-id, att-id, body)
-                              pr/OK)
+  (_case  status
 
-         http-errors/Unathorized (process-http-unathorized thread rec-id  att-id  body)
+          http-errors/OK     (process-http-OK thread rec-id  att-id  body headers)
 
-         http-errors/Not-Found  (proccess-http-not-found thread rec-id (headers :content-type) att-id status body)
+          http-errors/Unathorized (process-http-unathorized thread rec-id  att-id  body headers)
 
-         (process-http-delault thread rec-id  att-id  body status)))
+          http-errors/Not-Found  (proccess-http-not-found thread rec-id headers  att-id status body)
+
+          (process-http-default thread rec-id  att-id  body status)))
 
 (defn- decode-resp [resp thread rec-id att-id]
   (let [{:keys [status  error]} resp]
@@ -126,51 +131,80 @@
       (do
         (fatalf "%s:failed, request %s attachment %sexception: error %s status %s"
                 thread rec-id att-id error  status)
-        {:att-id att-id :exit-code pr/ERROR :status status})
+        {:att-id att-id :exit-code pr/ERROR :status 500})
       {:att-id att-id
+       :body (:body resp)
+       :content-type (-> resp :headers :content-type)
        :exit-code (process-http-responce thread rec-id att-id resp)
        :status status})))
 
-(defn- retry-wait []
-  (Thread/sleep  (* (or (get-executors-globals :max-retry-waiting) default-max-retry-waiting) (rand))))
+(defn- retry-wait [ret-val]
+  (Thread/sleep  (* (or (get-executors-globals :max-retry-waiting) default-max-retry-waiting) (rand)))
+  ret-val)
 
-(defn- server-not-available-waiting []
-  (Thread/sleep  (or (get-executors-globals :server-not-available-waiting) default-server-not-available-waiting)))
+(defn- server-not-available-waiting [ret-val]
+  (Thread/sleep  (or (get-executors-globals :server-not-available-waiting) default-server-not-available-waiting))
+  ret-val)
 
 (def  max-retry-count (delay (or (get-executors-globals :max-retry-count) default-max-retry-count)))
 
+(def fast-copy? (delay (= (get-executors-globals :attachment-copy-mode) "fast")))
 
 (def get-attachment-body-factory
-  (delay (if (= (get-executors-globals :attachment-copy-mode) "fast") identity
-             (fn [attachment]
-               (assoc attachment :body (get-attachment-body-by-id (:att_id attachment)))))))
+  (delay (if (= (get-executors-globals :attachment-copy-mode) "fast")
+           identity
+           (fn [attachment]
+             (assoc attachment :body (get-attachment-body-by-id (:att_id attachment)))))))
+
+
+(defmacro copied [resp att_id]
+  `(do (@set-attachment-copy-mark ~att_id (:status ~resp))
+       (reduced ~resp)))
+
+(defn sender-factory  [thread req-id post-attachment]
+  (fn [_ attachment]
+    (let [att_id (:att_id attachment)
+          resp (decode-resp (post-attachment attachment) thread req-id att_id)]
+      (_case (:exit-code resp)
+
+             pr/ERROR  (copied resp att_id)
+
+             pr/OK  (copied resp att_id)
+
+             pr/NOT-ATHORIZED (copied resp att_id)
+
+             pr/TOO-MANY-THREADS (retry-wait resp)
+
+             pr/SERVER-NOT-AVAILABLE  (server-not-available-waiting resp)))))
+
+(defn- copy-report [result]
+  (conj {:status (:status result)}
+        (when-let [body  (try (json/parse-string (:body result) true)
+                              (catch Exception e 
+                                (debugf "Json parcing error %s, json - %s " 
+                                       (ex-message e) (:body result))))]
+          {:Messages (body :Messages)
+           :ReturnCode (body :ReturnCode)
+           :href (-> body :attachment :href);(when-let [attachment (body "attachment")] (attachment "href"))
+           })))
+
+(defn copy-attachment-factory  [sender]
+  (fn [attachment]
+    (conj
+     {:name (:name attachment)
+      :att_id (:att_id attachment)}
+     (copy-report
+      (reduce  sender nil (repeat @max-retry-count  attachment))))))
+
 
 (defn copy [^String id ^String thread ^String url ^String authorization]
   (timbre/with-merged-config
-    {:appenders {:println {:enabled? false}
+    {:appenders {:println {:enabled? true}
                  :spit (appenders/spit-appender {:fname "log/attachment.log"})}}
-    (let [post-attachment (post-attachment-factory  url, authorization)
-          get-attachment-body (@get-attachment-body-factory)]
-      (loop [attachments (get-attachments-by-req-id   id)
-             retry @max-retry-count]
-        (if (zero? retry)
-          (errorf "%s:attachment copy session failed for request %s, max retry count exceeded."
-                  thread id)
-          (let [attachment (first attachments)
-                att_id (:att_id attachment)
-                resp (->  attachment
-                          get-attachment-body
-                          post-attachment
-                          (decode-resp  thread id att_id))]
-
-            (_case (:exit-code resp)
-                   pr/OK  (do (set-attachment-copy-mark att_id (:status resp))
-                              (recur (rest attachments) @max-retry-count))
-                   pr/NOT-ATHORIZED (do (set-attachment-copy-mark att_id (:status resp))
-                                        (recur (rest attachments) @max-retry-count))
-                   pr/TOO-MANY-THREADS (do (retry-wait)
-                                           (recur attachments (dec retry)))
-                   pr/SERVER-NOT-AVAILABLE (do (server-not-available-waiting)
-                                               (recur attachments (dec retry))))))))))
-
-
+    (let [get-attachment-body @get-attachment-body-factory
+          copy-attachment  (copy-attachment-factory
+                            (sender-factory thread id
+                                            (post-attachment-factory  url, authorization)))]
+      (if @fast-copy?
+        (map copy-attachment (@get-attachments-by-req-id   id))
+        (map (comp copy-attachment get-attachment-body)  (@get-attachments-by-req-id   id))))))

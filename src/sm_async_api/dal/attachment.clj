@@ -91,15 +91,22 @@
     (fn [^String id]
       (jdbc/query @db  [(str "SELECT ATT_ID" attachment " WHERE ATT_REQ_ID=?") id]))))
 
-(defn get-attachments-by-req-id-factory [{:keys [db-schema]}]
+(defn get-attachments-by-req-id-factory [{:keys [db-schema]} copy-mode]
   (let [attachment  (str db-schema ".ATTACHMENT")]
-    (fn [^String id]
-      (jdbc/query @db
-                  [(str
-                    "SELECT NAME, CONTENT_TYPE, SIZE, BODY, STATUS FROM "
-                    attachment
-                    " WHERE ATT_REQ_ID= ?") id]
-                  {:row-fn #(assoc % :body (->> % :body blob-to-byte io/input-stream))}))))
+    (if (= copy-mode "fast")
+      (fn [^String id]
+        (jdbc/query @db
+                    [(str
+                      "SELECT ATT_ID, NAME, CONTENT_TYPE, SIZE, BODY, STATUS FROM "
+                      attachment
+                      " WHERE ATT_REQ_ID= ?") id]
+                    {:row-fn #(assoc % :body (->> % :body blob-to-byte io/input-stream))}))
+      (fn [^String id]
+        (jdbc/query @db
+                    [(str
+                      "SELECT ATT_ID, NAME, CONTENT_TYPE, SIZE,STATUS FROM "
+                      attachment
+                      " WHERE ATT_REQ_ID= ?") id])))))
 
 (defn get-attachment-body-by-id-factory [{:keys [db-schema]}]
   (let [attachment  (str db-schema ".ATTACHMENT")]
@@ -111,4 +118,4 @@
 (defn set-attachment-copy-mark-factory [{:keys [db-schema]}]
   (let [attachment  (str db-schema ".ATTACHMENT")]
     (fn [^String id ^String status]
-      (jdbc/update! @db attachment {:status status :cp-time (unixtime->timestamp (tod))} ["ATT_ID=?" id]))))
+      (jdbc/update! @db attachment {:status status :cp_time (unixtime->timestamp (tod))} ["ATT_ID=?" id]))))
