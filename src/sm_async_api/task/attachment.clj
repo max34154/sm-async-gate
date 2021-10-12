@@ -6,7 +6,7 @@
    [cheshire.core :as json]
    [sm_async_api.utils.macro :refer [_case]]
    [sm_async_api.utils.sm_resp_decode :as sm-decode :refer [get-RC get-jbody]]
-   [sm_async_api.config :refer [get-executors-globals config]]
+   [sm_async_api.config :as config :refer [get-executors-globals config get-keylist get-config]]
    [sm_async_api.dal.attachment :as dal-a]
    [sm_async_api.http_errors :as http-errors]
    [sm_async_api.enum.process_result :as pr]
@@ -180,9 +180,9 @@
 (defn- copy-report [result]
   (conj {:status (:status result)}
         (when-let [body  (try (json/parse-string (:body result) true)
-                              (catch Exception e 
-                                (debugf "Json parcing error %s, json - %s " 
-                                       (ex-message e) (:body result))))]
+                              (catch Exception e
+                                (debugf "Json parcing error %s, json - %s "
+                                        (ex-message e) (:body result))))]
           {:Messages (body :Messages)
            :ReturnCode (body :ReturnCode)
            :href (-> body :attachment :href);(when-let [attachment (body "attachment")] (attachment "href"))
@@ -196,15 +196,41 @@
      (copy-report
       (reduce  sender nil (repeat @max-retry-count  attachment))))))
 
+(defn get-async-item-uid [body-json]
+  (->>  (get-config :async-action-keys)
+        (map #(get body-json %))
+        (s/join "/")))
 
-(defn copy [^String id ^String thread ^String url ^String authorization]
-  (timbre/with-merged-config
-    {:appenders {:println {:enabled? true}
-                 :spit (appenders/spit-appender {:fname "log/attachment.log"})}}
-    (let [get-attachment-body @get-attachment-body-factory
-          copy-attachment  (copy-attachment-factory
-                            (sender-factory thread id
-                                            (post-attachment-factory  url, authorization)))]
-      (if @fast-copy?
-        (map copy-attachment (@get-attachments-by-req-id   id))
-        (map (comp copy-attachment get-attachment-body)  (@get-attachments-by-req-id   id))))))
+(defn get-other-item-uid [subject service body-json]
+  (if (nil? subject)
+    (->> ((@config/config :collections-keylist) (keyword service))
+         (map #(get body-json %))
+         (s/join "/"))
+    subject))
+
+
+
+(defn build-attachment-url [{:keys [subject service mode]} body-json]
+  (when (some? body-json)
+    (if (= mode :async-mode)
+      (str (get-config :async-action-url) "/" (get-async-item-uid  body-json) "/attachments")
+      (str (get-config :base-url) "/" (get-other-item-uid subject service body-json) "/attachments"))))
+
+
+(defn copy
+  ([opts body headers]
+   (when-let [url  (build-attachment-url opts (get-jbody body headers))]
+     (copy  opts url)))
+
+  ([{:keys [rec-id thread headers]} ^String url]
+   (timbre/with-merged-config
+     {:appenders {:println {:enabled? true}
+                  :spit (appenders/spit-appender {:fname "log/attachment.log"})}}
+     (let [authorization (get headers "Authorization")
+           get-attachment-body @get-attachment-body-factory
+           copy-attachment  (copy-attachment-factory
+                             (sender-factory thread rec-id
+                                             (post-attachment-factory  url, authorization)))]
+       (if @fast-copy?
+         (map copy-attachment (@get-attachments-by-req-id   rec-id))
+         (map (comp copy-attachment get-attachment-body)  (@get-attachments-by-req-id   rec-id)))))))
