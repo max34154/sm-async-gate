@@ -1,4 +1,4 @@
-(ns sm_async_api.task.sync_dispatcher_test
+(ns  ^:task  sm-async-api.task.sync-dispatcher-test
   {:clj-kondo/config  '{:linters {:unresolved-symbol
                                   {:exclude [responce-OK
                                              responce-BAD-REQ
@@ -71,7 +71,7 @@
                    :subject "test-subject"
                    :execution_mode "IS"
                    :action "test-action"
-                   :attempt 1
+                   ;:attempt 1
                    :execution_retries 2
                    :retry_interval 10
                    :rec_id "test_id"
@@ -140,8 +140,8 @@
    {:route-params {:action_id (action :rec_id)}}))
 
 (defn fix-read-config [t]
-  (config/configure "test/")
-  (println "Configured")
+ (config/configure "test/config/run/")
+  ;(println "Configured")
   ;(dal/open_db)
   ;(dal/check_db)
   (configure-database)
@@ -198,9 +198,9 @@
 (deftest ok-test
   (testing "Correct dispatcher working for dedicated mode "
     (relector-set-responce responce-OK)
-    (let [actions  (get-all-user-actions 5 test-action)]
+    (let [actions  (get-all-user-actions 1 test-action)]
           ;(get-actions "max" 5 test-action)]
-      (post-actions-and-wait actions 5000)
+      (post-actions-and-wait actions 10000)
       (doseq [action actions]
         (testing (format "Check if action %s processed "  (action :rec_id))
           (is (some? ((first (read-action action)) :res_status))))))));)
@@ -253,13 +253,13 @@
       (testing "Schedule for retry"
         (doseq [action actions]
           (testing (format "Check if action %s processed "  (action :rec_id))
-            (is (= 2 ((first (read-action action)) :attempt))))))
+            (is (= 1 ((first (read-action action)) :attempt))))))
       (debug "Wait attempt 2 ")
       (Thread/sleep 30000)
       (testing "Retry and cancel"
         (doseq [action actions]
           (testing (format "Check if action %s processed "  (action :rec_id))
-            (is (= 3 ((first (read-action action)) :attempt)))))))))
+            (is (= 0 ((first (read-action action)) :attempt)))))))))
 
 (deftest UNK-ATH-ERR-test
   (testing "Responce 401 witout SM responce "
@@ -298,7 +298,7 @@
       (post-actions-and-wait actions 20000)
       (doseq [action actions]
         (testing (format "Check if action %s processed "  (action :rec_id))
-          (is (< 1 ((first (read-action action)) :attempt))))))))
+          (is (= 0 ((first (read-action action)) :attempt))))))))
 
 (deftest WRONG-CREDS-test
   (testing "Responce 500 with  SM responce  NOT-AUTHORIZED"
@@ -307,16 +307,16 @@
       (post-actions-and-wait actions 20000)
       (doseq [action actions]
         (testing (format "Check if action %s processed "  (action :rec_id))
-          (is (< 1 ((first (read-action action)) :attempt))))))))
+          (is (= 0 ((first (read-action action)) :attempt))))))))
 
 (deftest NO-SERVER-no-json
   (testing "Responce 404 with content type other than json"
     (relector-set-responce responce-NO-SERVER-no-json)
     (let [actions   (get-all-user-actions 5 test-action)]
-      (post-actions-and-wait actions 5000)
+      (post-actions-and-wait actions 20000)
       (doseq [action actions]
         (testing (format "Check if action %s processed "  (action :rec_id))
-          (is (< 1 ((first (read-action action)) :attempt))))))))
+          (is (= 0  ((first (read-action action)) :attempt))))))))
 
 (deftest NOT-ATHORIZED-UM-test
   (testing "Responce 401 and SM WRONG CREDENTIALS for user mode thread"
@@ -332,11 +332,11 @@
     (relector-set-responce responce-NOT-ATHORIZED)
     (let [actions  (get-actions "other1" 5 test-action)]
       (post-actions-and-wait actions 5000)
-      (is (= 0   ((@sd/online-pushers  "1AEF-G::Global") :threads))))))
+      (is (= 0   ((@sd/online-pushers  "1AEF::T-G::Global") :threads))))))
 
 
 
-(defn t2 [& _]
+(defn t2 [ _ ]
   (if (> (rand) 0.5)  responce-OK responce-TOO-MANY-THREADS))
 
 (deftest resp-too-many-threads-test

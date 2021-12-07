@@ -20,6 +20,7 @@
                  [ring/ring-json "0.5.1"]
                  [org.clojure/java.jdbc "0.7.12"]
                  [com.h2database/h2 "1.4.200"]
+                 [org.postgresql/postgresql "42.2.24"]
                  [com.taoensso/timbre "5.1.2"]
                  [clj-time "0.15.2"]
                  [http-kit.fake "0.2.1"]]
@@ -27,7 +28,12 @@
 
   :target-path "target/%s"
 
-  :test-selectors {:dal :dal}
+  :test-selectors {:dal :dal 
+                   :hook :hook 
+                   :task :task
+                   :attachment :attachment
+                   :api :api}
+  
   :source-paths ["src" "src/sm_async_api" "src/sm_async_api/enum"  "src/sm_async_api/task" "src/sm_async_api/utils" ]
   :test-paths ["test" "test/sm_async_api/enum" "test/sm_async_api/task" "test/sm_async_api/utils" ]
   

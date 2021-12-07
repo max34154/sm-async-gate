@@ -163,19 +163,24 @@
 
 (defn sender-factory  [thread req-id post-attachment]
   (fn [_ attachment]
-    (let [att_id (:att_id attachment)
-          resp (decode-resp (post-attachment attachment) thread req-id att_id)]
-      (_case (:exit-code resp)
+    (timbre/with-merged-config
+      {:appenders {:println {:enabled? false}
+                   :spit (appenders/spit-appender {:fname "log/attachment.log"})}}
+      (let [att_id (:att_id attachment)
+            resp (decode-resp (post-attachment attachment) thread req-id att_id)]
+        (_case (:exit-code resp)
 
-             pr/ERROR  (copied resp att_id)
+               pr/ERROR  (copied resp att_id)
 
-             pr/OK  (copied resp att_id)
+               pr/OK  (copied resp att_id)
 
-             pr/NOT-ATHORIZED (copied resp att_id)
+               pr/NOT-ATHORIZED (copied resp att_id)
 
-             pr/TOO-MANY-THREADS (retry-wait resp)
+               pr/TOO-MANY-THREADS (retry-wait resp)
 
-             pr/SERVER-NOT-AVAILABLE  (server-not-available-waiting resp)))))
+               pr/SERVER-NOT-AVAILABLE  (server-not-available-waiting resp))))))               
+
+
 
 (defn- copy-report [result]
   (conj {:status (:status result)}
@@ -190,21 +195,30 @@
 
 (defn copy-attachment-factory  [sender]
   (fn [attachment]
-    (conj
-     {:name (:name attachment)
-      :att_id (:att_id attachment)}
-     (copy-report
-      (reduce  sender nil (repeat @max-retry-count  attachment))))))
+      (debug "Ready to copy " (:name attachment) " attachment id  " (:att_id attachment))
+      (conj
+       {:name (:name attachment)
+        :att_id (:att_id attachment)}
+       (copy-report
+        (reduce  sender nil (repeat @max-retry-count  attachment))))))
+
+
+(defn- strip-body [body-json]
+  (reduce #(if (map? (%2 1)) (reduced (%2 1)) {})
+          {} (dissoc body-json :ReturnCode :Messages)))
+
 
 (defn get-async-item-uid [body-json]
   (->>  (get-config :async-action-keys)
-        (map #(get body-json %))
+        (map #(get (strip-body body-json) %))
         (s/join "/")))
 
-(defn get-other-item-uid [subject service body-json]
+
+(defn- get-other-item-uid [subject service body-json]
   (if (nil? subject)
-    (->> ((@config/config :collections-keylist) (keyword service))
-         (map #(get body-json %))
+    (->> (@config/config :collections-keylist)
+         ((keyword service))
+         (map #(get (strip-body body-json) %))
          (s/join "/"))
     subject))
 
@@ -214,23 +228,28 @@
   (when (some? body-json)
     (if (= mode :async-mode)
       (str (get-config :async-action-url) "/" (get-async-item-uid  body-json) "/attachments")
-      (str (get-config :base-url) "/" (get-other-item-uid subject service body-json) "/attachments"))))
+      (str (get-config :base-url)  service "/" (get-other-item-uid subject service body-json) "/attachments"))))
 
 
 (defn copy
-  ([opts body headers]
-   (when-let [url  (build-attachment-url opts (get-jbody body headers))]
-     (copy  opts url)))
-
-  ([{:keys [rec-id thread headers]} ^String url]
+  ([opts body]
    (timbre/with-merged-config
-     {:appenders {:println {:enabled? true}
+     {:appenders {:println {:enabled? false}
                   :spit (appenders/spit-appender {:fname "log/attachment.log"})}}
-     (let [authorization (get headers "Authorization")
-           get-attachment-body @get-attachment-body-factory
-           copy-attachment  (copy-attachment-factory
-                             (sender-factory thread rec-id
-                                             (post-attachment-factory  url, authorization)))]
-       (if @fast-copy?
-         (map copy-attachment (@get-attachments-by-req-id   rec-id))
-         (map (comp copy-attachment get-attachment-body)  (@get-attachments-by-req-id   rec-id)))))))
+     (let [url  (build-attachment-url opts (json/parse-string body))]
+       (if (some? url)
+         (let [{:keys [rec-id thread headers]}  opts
+               authorization (get headers "Authorization")
+               get-attachment-body @get-attachment-body-factory
+               copy-attachment  (copy-attachment-factory
+                                 (sender-factory thread rec-id
+                                                 (post-attachment-factory  url, authorization)))]
+           ;(debug "Attachment list for " rec-id ": " (reduce #(str %1 " :: " (:name %2)) "" (@get-attachments-by-req-id   rec-id)))
+           ;(debug "Copy url " url " for "  rec-id)
+           ;(debug "Fast copy option is " @fast-copy? " for " rec-id)
+           ;(debug "opts" opts)
+           ;(debug "body" body)
+           (if @fast-copy?
+             (doall (map copy-attachment (@get-attachments-by-req-id   rec-id)))
+             (doall (map (comp copy-attachment get-attachment-body)  (@get-attachments-by-req-id   rec-id)))))
+         (errorf "Build attachment copy url for opts %s and body %s " opts body))))))

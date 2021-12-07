@@ -11,6 +11,8 @@
             logf tracef debugf infof warnf errorf fatalf reportf
             spy get-env]]
    [sm_async_api.config :as config]
+   [sm_async_api.utils.dispatcher :as dispatcher :refer [fetch-marker
+                                                         command-exit]]
    [sm_async_api.hook.globals :as hg]
    [sm_async_api.hook.pusher :refer [message-sender-factory]]
    [sm_async_api.hook.reader :refer [message-reader]]
@@ -19,10 +21,10 @@
 
 
 (defn build-exclude-list []
-  (if (config/get-messangers :dedicated)
+  (if (config/get-messengers :dedicated)
     (str/join "','" (reduce #(if (empty? %2)  %1 (conj %1 %2))
                             nil (flatten
-                                 (reduce #(conj %1 (:name %2)) nil  (config/get-messangers :dedicated)))))
+                                 (reduce #(conj %1 (:name %2)) nil  (config/get-messengers :dedicated)))))
     :not-configured))
 
 (defn build-condition [{:keys [name  mode]}]
@@ -42,7 +44,7 @@
     nil))
 
 
-(defn run-messanger
+(defn run-messenger
   [params local-id reader message-sender]
   (let
    [chank-size  (or (params :chank-size) hg/default-chank-size)
@@ -54,7 +56,7 @@
     task-buffer (chan  channel-size)
     reader-control (chan (sliding-buffer 2))
     condition  (build-condition params)
-    global-id (str (config/get-config :async_gateway_id) "::M-" local-id)]
+    global-id (str (config/get-config :async-gateway-id) "::M-" local-id)]
     (if (nil? condition)
       (fatal "Incorrect condition for pusher %s. Supplied parameters %s. Pusher skipped."
              global-id params)
@@ -79,9 +81,9 @@
           :condition condition
           :mode (params :mode)}}))))
 
-(defn run-dedicated-messanger [{:keys [name threads chank-size ]}
+(defn run-dedicated-messenger [{:keys [name threads chank-size]}
                                message-sender               reader]
-  (run-messanger {:mode :user-mode
+  (run-messenger {:mode :user-mode
                   :name  name
                   :threads threads
                   :chank-size chank-size}
@@ -89,23 +91,42 @@
                  reader
                  message-sender))
 
-(defn messanger-manager-run  []
-  (let [{:keys [messangers config database]}  @config/config
+(defn messenger-manager-run  []
+  (let [{:keys [messengers config database]}  @config/config
         reader (dal-h/message-reader-factory database)
         message-sender (message-sender-factory  (config  :async-pusher-enabled))]
-    (infof "Configure messangers (async-mode: %s) ..." (config  :async-pusher-enabled))
+    (infof "Configure messengers (async-mode: %s) ..." (config  :async-pusher-enabled))
     (reset! hg/online-messangers
             (conj
-             (when (messangers :dedicated-enabled)
-               (into {} (map run-dedicated-messanger
-                             messangers
-                             (messangers :dedicated)
-                             (repeat message-sender))))
-             (when (messangers :global-enabled)
-               (run-messanger {:mode :global-mode
-                               :threads (messangers :global-threads)
-                               :chank-size (messangers :global-chank-size)}
+             (when (messengers :dedicated-enabled)
+               (into {} (map run-dedicated-messenger
+                             (messengers :dedicated)
+                             (repeat message-sender)
+                             (repeat reader))))
+             (when (messengers :global-enabled)
+               (run-messenger {:mode :global-mode
+                               :threads (messengers :global-threads)
+                               :chank-size (messengers :global-chank-size)}
                               "G::Global"
                               reader
-                              message-sender)))))
-  (info "Pushers are configured."))
+                              message-sender))))))
+
+
+(defn start-messengers
+  ([] (start-messengers true))
+  ([kick?]
+   (info (str "Start messengers " (when kick? " and run messaging cycle.")))
+   (if (some? (messenger-manager-run))
+     (when kick? (dispatcher/do-all hg/online-messangers dispatcher/kick))
+     1)))
+
+(defn stop-messengers
+  ([] (dispatcher/stop  hg/online-messangers 10))
+  ([max-wait-time] (dispatcher/stop  hg/online-messangers max-wait-time)))
+
+
+(defn messengers-get-messenger [messenger-id]
+  (@hg/online-messangers messenger-id))
+
+(defmacro pusher-manager-do-all [action]
+  `(dispatcher/do-all online-messangers ~action))

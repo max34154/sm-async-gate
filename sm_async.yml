@@ -1,9 +1,10 @@
 module_ip: 212.11.152.7:13080
 login: max
-async_gateway_id: 1AEF
+async-gateway-id: 1AEF
+async-gateway-port: 3000
 collections:
-- {name: FOSeaist, acl: true, keys: [ InteractionID] }
-- {name: FOSpp, acl: false, keys: [ InteractionID] }
+- {name: FOSeaist, acl: true, keylist: [ InteractionID] }
+- {name: FOSpp, acl: false, keylist: [ InteractionID] }
 max-att-size: 10000000
 max-total-att-size: 0
 mime-types: [image/png, image/jpg, image/jpeg, image/bmp, image/tiff, application/msword,
@@ -15,3 +16,6 @@ to-many-threads-sleep: 100
 server-not-availalbe-sleep: 3000
 async-pusher-enabled: true
 async-action-keys: [ ActionID ] 
+write-intermidiate-result: false
+poll-enabled: true 
+poll-port: 3001

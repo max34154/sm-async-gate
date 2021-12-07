@@ -1,14 +1,17 @@
-(ns sm-async-api.task.process_result_test
+(ns ^:task sm-async-api.task.process-result-test
   (:require
 
-   [sm_async_api.task.process_result :as pr :refer [OK
-                                                    TOO-MANY-THREADS
-                                                    SERVER-NOT-AVAILABLE
-                                                    NOT-ATHORIZED]]
+   [sm_async_api.task.process_result :as pr]
+   [sm_async_api.enum.process_result :refer [OK
+                                             TOO-MANY-THREADS
+                                             SERVER-NOT-AVAILABLE
+                                             NOT-ATHORIZED]]
    [sm_async_api.enum.sm :as sm]
-   [clojure.test :refer [testing  deftest  are]]
+   [clojure.test :refer [testing  deftest  are use-fixtures]]
    [sm_async_api.task.writers :as tw]
-   [sm_async_api.http_errors :as http-errors]))
+   [sm_async_api.http_errors :as http-errors]
+   [sm_async_api.config :as config]
+   [sm_async_api.dal.configure :refer [configure-database]]))
 
 
 (def http-post-return-base
@@ -40,9 +43,9 @@
   (fn [rec-id body status]
     (str  "XXXWrite rec-id=" rec-id  "body" body "state=" status)))
 
-(defn get-test-action-rescheduler [] 
+(defn get-test-action-rescheduler []
   (fn [rec-id body status]
-  (str  "XXXReschedule if possible rec-id=" rec-id   "body" body "state=" status)))
+    (str  "XXXReschedule if possible rec-id=" rec-id   "body" body "state=" status)))
 
 
 (def responce-OK (responce sm/RC_SUCCESS "" http-errors/OK))
@@ -84,24 +87,33 @@
 (def responce-UNK-ERROR
   (responce nil "write and go ..." 10000))
 
+
+
+
 (deftest  test-process-result
   (testing "Check process-result (analyse results recived from sm) "
-    (with-redefs  [sm_async_api.task.writers/result-writer (delay (get-test-result-writer))
-                   sm_async_api.task.writers/action-rescheduler  (delay (get-test-action-rescheduler))]
-      (are  [r p] (= r (pr/process p))
-        OK responce-OK
-        NOT-ATHORIZED responce-NOT-ATHORIZED
-        TOO-MANY-THREADS responce-TOO-MANY-THREADS
-        OK responce-UNK-ATH-ERR
-        OK responce-NO-MORE
-        SERVER-NOT-AVAILABLE responce-NO-SERVER-json
-        SERVER-NOT-AVAILABLE responce-NO-SERVER-no-json
-        OK responce-BAD-REQ
-        OK responce-INTERNAL-ERROR
-        OK responce-INTERNAL-ERROR-GENERIC
-        OK  responce-WRONG-CREDS
-        OK responce-UNK-ERROR))))
+    (are  [r p] (= r (pr/process p))
+      OK responce-OK
+      NOT-ATHORIZED responce-NOT-ATHORIZED
+      TOO-MANY-THREADS responce-TOO-MANY-THREADS
+      OK responce-UNK-ATH-ERR
+      OK responce-NO-MORE
+      SERVER-NOT-AVAILABLE responce-NO-SERVER-json
+      SERVER-NOT-AVAILABLE responce-NO-SERVER-no-json
+      OK responce-BAD-REQ
+      OK responce-INTERNAL-ERROR
+      OK responce-INTERNAL-ERROR-GENERIC
+      OK  responce-WRONG-CREDS
+      OK responce-UNK-ERROR)))
 
 
+(defn fix-setup [t]
+  (with-redefs [sm_async_api.task.writers/result-writer (delay (get-test-result-writer))
+                sm_async_api.task.writers/action-rescheduler  (delay (get-test-action-rescheduler))]
+   (config/configure "test/config/run/");"test/sm_async_api/")
+    (configure-database)
+    (t)))
+
+(use-fixtures :once fix-setup)
 
 

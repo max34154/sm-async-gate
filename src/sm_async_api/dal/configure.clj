@@ -11,17 +11,19 @@
                                               user-action
                                               task-action
                                               hook-action
-                                              request-action]]
+                                              request-action
+                                              attachment-action]]
             [sm_async_api.dal.user :as dal-u]
             [sm_async_api.dal.task :as dal-t]
             [sm_async_api.dal.request :as dal-r]
             [sm_async_api.dal.hook :as dal-h]
+            [sm_async_api.dal.attachment :as dal-a]
             [clojure.java.io :as io]
             [taoensso.timbre :as timbre
              :refer [;log  trace  debug  info  warn  error  fatal  report
                      ;logf tracef debugf infof warnf errorf fatalf reportf
                      ;spy get-env
-                     debug fatal report reportf errorf]]
+                     debug  debugf warnf fatal report reportf errorf]]
             #_[taoensso.timbre.appenders.core :as appenders])
   (:import [java.io File]))
 
@@ -31,9 +33,10 @@
                           "RESPONCE" 100
                           "USER" 1000
                           "HOOK" 10000
-                          "MESSAGE" 100000})
+                          "MESSAGE" 100000
+                          "MESSAGE_LOG" 1000000})
 
-(def ^:private db_correct_value 111111)
+(def ^:private db_correct_value 1111111)
 
 (def ^:privat ^Integer min-cleaner-period 10000)
 
@@ -53,29 +56,6 @@
 
 
 ;; H2 Methods START
-#_(defmethod open-db "h2" [db-config]
-    (case (:h2-protocol db-config)
-
-      "tcp" {:classname   "org.h2.Driver"
-             :subprotocol "h2"
-             :subname (str  "tcp://" (:db-host db-config)  "/" (:db-name db-config))
-             :user (:db-login db-config)
-             :password  (or  (:db-password db-config) "")}
-
-      "mem"  {:classname   "org.h2.Driver"
-              :subprotocol "h2:mem"
-              :subname     "demo;DB_CLOSE_DELAY=-1"
-              :user        (:db-login db-config)
-              :password     (or  (:db-password db-config) "")}
-
-      "file" {:classname   "org.h2.Driver"
-              :subprotocol "h2:file"
-              :subname (or (:h2-path db-config) (str (System/getProperty "user.dir")))
-              :user (:db-login db-config)
-              :password  (or  (:db-password db-config) "")}
-
-      (throw (AssertionError. (str "Incorrect or not supported h2 protocol " (:h2-protocol db-config) ".")))))
-
 (defmethod open-db "h2" [db-config]
   (case (:h2-protocol db-config)
 
@@ -101,15 +81,44 @@
   (str  "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '"
         db-schema "' AND TABLE_TYPE='TABLE'"))
 
-
 ;; H2 Methods END
+;; Postgresql Methods START
+
+(defmethod open-db "postgres" [db-config]
+  (let [[host port] (str/split (:db-host db-config) #":")]
+    {:auto-commit        true
+     :read-only          false
+     :connection-timeout 30000
+     :validation-timeout 5000
+     :idle-timeout       600000
+     :max-lifetime       1800000
+     :minimum-idle       10
+     :maximum-pool-size  10
+     :pool-name          "db-pool"
+     :adapter            "postgresql"
+     :username           (:db-login db-config)
+     :password           (:db-password db-config)
+     :database-name      (:db-name db-config)
+     :server-name        host
+     :port-number        port
+     ;:stringtype         "unspecified"
+     :register-mbeans    false}))
+
+(defmethod sql-get-table-list "postgres" [{:keys [db-schema]}]
+  (str  "SELECT TABLE_NAME FROM information_schema.TABLES WHERE TABLE_SCHEMA = '"
+        db-schema "' AND TABLE_TYPE='TABLE'"))
+
+;; Postgresql Methods END
 
 (def ^:private db-setup-sql-h2 (slurp "src/sm_async_api/db_setup_h2.sql"))
+
+(def ^:private db-setup-sql-pg (slurp "src/sm_async_api/db_setup_pg.sql"))
 
 (defn- db-setup [{:keys [db-type db-schema]}]
   (str/replace
    (case db-type
      "h2" db-setup-sql-h2
+     "postgres" db-setup-sql-pg
      (throw (AssertionError. (str "Incorrect or not supported dbtype  " db-type ".")))) "%SCHEMA%" db-schema))
 
 (defn- correct_db? [db-config]
@@ -118,15 +127,39 @@
              (jdbc/query @db (sql-get-table-list db-config)))))
 
 
-(defn execute-script [script]
-  (doseq [l (str/split script #";")]
-    (jdbc/execute! @db l)))
+
+(defn- execute-statment-error-fabric [error-processing]
+  (fn [error-count  statment]
+    (try
+      (jdbc/execute! @db statment)
+      error-count
+      (catch Exception e
+        (case error-processing
+          :ignore
+          (do
+            (debugf "Script execution error: statement %s error %s" statment (ex-message e))
+            (inc error-count))
+          :warn
+          (do (warnf "Script execution error: statement %s error %s" statment (ex-message e))
+              (inc error-count))
+          :exit (do
+                  (errorf "Script execution error: statement %s error %s" statment (ex-message e))
+                  (reduced 1)))))))
+
+(defn execute-script
+  ([script]
+   (doseq [l (str/split script #";")]
+     (jdbc/execute! @db l)))
+  ([script error-handling]
+   (reduce (execute-statment-error-fabric error-handling)
+           0
+           (str/split script #";"))))
 
 (defn- check_db [db-config]
   (debug "Is db correct? " (correct_db? db-config))
   (when-not (correct_db? db-config)
     (report "DB reconfiguration required.")
-    (execute-script (db-setup db-config)))
+    (execute-script (db-setup db-config) :warn))
   (report "DB configured."))
 
 (defn reload-hook-templates
@@ -192,7 +225,8 @@
         (send task-action (fn [_] (dal-t/configure db-config)))
         (send request-action (fn [_] (dal-r/configure db-config)))
         (send hook-action (fn [_] (dal-h/configure db-config)))
-        (when-not (await-for 10000 user-action task-action request-action hook-action)
+        (send attachment-action (fn [_] (dal-a/configure db-config)))
+        (when-not (await-for 10000 user-action task-action request-action hook-action attachment-action)
           (throw (AssertionError. (str "DB functions configuration error "
                                        "user action " @user-action
                                        "task-action " @task-action

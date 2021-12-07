@@ -13,6 +13,7 @@
                      spy get-env]]
             [clojure.java.io :as io]))
 
+;;TODO - base-path and async-service must be configurable 
 ;; Parse a YAML file
 (def ^:const default-values
   '([:to-many-threads-sleep 100]
@@ -106,6 +107,14 @@
                                       (str  (% :base-url) (% :async-service))))
                              build-mime-types)))
 
+
+(def file-not-found-msg "Mandatory configuration file %s is corrupted or not found in %s")
+
+(defn- config-file-not-found [path base workers db]
+  (when-not (some? base) (fatalf file-not-found-msg "sm_async.yml" path))
+  (when-not (some? db) (fatalf file-not-found-msg "db.yml" path))
+  (when-not (some? workers) (fatalf file-not-found-msg "workers.yml" path)))
+
 (defn read-config [path]
   (let [base-file (str path "sm_async.yml")
         workers-file (str path "workers.yml")
@@ -119,24 +128,27 @@
             base (yaml/from-file base-file)
             globals (yaml/from-file globals-file)
             messengers (yaml/from-file messengers-file)]
-        (when (and (some? workers) (some? base) (some? db))
-          (reset! keystore (yaml/from-file keystore-file))
-          (var-set local-config* (-> {} (assoc :workers (decoder workers))
-                                     (assoc :messengers  (if (some? messengers) messengers {}))
-                                     (assoc :config (decoder base))
-                                     (assoc :database (decoder db))
-                                     (assoc :executors-globals
-                                            (if (some? globals) globals {}))))
-          (with-open [w (io/writer  keystore-file)]
-            (.write w  (yaml/generate-string  @keystore)))
-          (with-open [w (io/writer  workers-file)]
-            (.write w (yaml/generate-string (password-remover workers))))
-          (with-open [w (io/writer  base-file)]
-            (.write w  (yaml/generate-string (password-remover base))))
-          (with-open [w (io/writer  db-file)]
-            (.write w  (yaml/generate-string (password-remover db))))
-          (var-get local-config*))))))
-
+        (if (and (some? workers) (some? base) (some? db))
+          (do
+            (reset! keystore (yaml/from-file keystore-file))
+            (var-set local-config* (-> {}
+                                       (assoc :workers (decoder workers))
+                                       (assoc :messengers  (if (some? messengers) messengers {}))
+                                       (assoc :config (decoder base))
+                                       (assoc :database (decoder db))
+                                       (assoc :executors-globals
+                                              (if (some? globals) globals {}))))
+            (with-open [w (io/writer  keystore-file)]
+              (.write w  (yaml/generate-string  @keystore)))
+            (with-open [w (io/writer  workers-file)]
+              (.write w (yaml/generate-string (password-remover workers) :dumper-options {:flow-style :block})))
+            (with-open [w (io/writer  base-file)]
+              (.write w  (yaml/generate-string (password-remover base) :dumper-options {:flow-style :block})))
+            (with-open [w (io/writer  db-file)]
+              (.write w  (yaml/generate-string (password-remover db) :dumper-options {:flow-style :block})))
+            (var-get local-config*))
+          (config-file-not-found path base workers db))))))
+;:dumper-options {:flow-style :block}
 (defn- fill-workers [workers]
   (assoc workers :dedicated
          (for [w (workers :dedicated)]
@@ -191,7 +203,7 @@
 (defn create-uid-generator [_config]
   (assoc  _config  :get-unique-id
           (let [i (atom 0)
-                module-name (-> _config  :config :async_gateway_id)]
+                module-name (-> _config  :config :async-gateway-id)]
             (fn  []
               (format "%X-%X-%s"
                       (quot (System/currentTimeMillis) 1000)
@@ -200,9 +212,9 @@
 
 (defn collection-keylist-builder [config]
   (assoc config :collections-keylist
-         (reduce #(if (and (some? (:name %2)) (some? (:keylist %2))) 
-                      (conj %1 {(keyword (:name %2))  (:keylist %2)})
-                      %1) {} (-> config :config :collections))))
+         (reduce #(if (and (some? (:name %2)) (some? (:keylist %2)))
+                    (conj %1 {(keyword (:name %2))  (:keylist %2)})
+                    %1) {} (-> config :config :collections))))
 
 (defn configure [path]
   (reset! config
@@ -245,7 +257,7 @@
   ([]  `(@sm_async_api.config/config :executors-globals))
   ([key] `(-> @sm_async_api.config/config :executors-globals ~key)))
 
-(defmacro get-module-name [] `(-> @sm_async_api.config/config :config :async_gateway_id))
+(defmacro get-module-name [] `(-> @sm_async_api.config/config :config :async-gateway-id))
 
 (defmacro get-uid []  `((@sm_async_api.config/config  :get-unique-id)))
 

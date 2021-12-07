@@ -11,7 +11,7 @@
                      ;logf tracef debugf infof warnf errorf fatalf reportf
                      ;spy get-env
                      errorf]])
-  (:import [java.sql SQLException]))
+  (:import [java.sql SQLException BatchUpdateException]))
 
 
 (def ^:private _default_lock_chunk_size 10)
@@ -41,6 +41,36 @@
   (throw (IllegalArgumentException.
           (str "Unsupported database type " (:db-type  db-config) "."))))
 
+(defmulti ^:private cleanup-exited-worker-sql (fn [db-config] (:db-type  db-config)))
+
+(defmethod cleanup-exited-worker-sql :default [db-config]
+  (throw (IllegalArgumentException.
+          (str "Unsupported database type " (:db-type  db-config) "."))))
+
+(defmulti ^:private post-task-result-sql (fn [db-config] (:db-type  db-config)))
+
+(defmethod post-task-result-sql :default [db-config]
+  (throw (IllegalArgumentException.
+          (str "Unsupported database type " (:db-type  db-config) "."))))
+
+(defmulti ^:private reschedule-task-sql (fn [db-config] (:db-type  db-config)))
+
+(defmethod reschedule-task-sql :default [db-config]
+  (throw (IllegalArgumentException.
+          (str "Unsupported database type " (:db-type  db-config) "."))))
+
+
+(defmulti ^:private get-tasks-on-time-sql (fn [db-config] (:db-type  db-config)))
+
+(defmethod get-tasks-on-time-sql :default [db-config]
+  (throw (IllegalArgumentException.
+          (str "Unsupported database type " (:db-type  db-config) "."))))
+
+(defmulti ^:private update-or-insert-result-factory (fn [db-config] (:db-type  db-config)))
+
+(defmethod update-or-insert-result-factory :default [db-config]
+  (throw (IllegalArgumentException.
+          (str "Unsupported database type " (:db-type  db-config) "."))))
 
 
 ;; H2 methods 
@@ -51,7 +81,7 @@
 
 (defmethod lock-task-sql-nsch "h2" [{:keys [^String db-schema]}]
   (str "UPDATE "  db-schema ".REQUEST"
-       " set status='L',locked_by=?,lock_time=SYSDATE"
+       " SET status='L',locked_by=?,lock_time=SYSDATE"
        " WHERE  (status='N' or status = '') and next_run < SYSDATE and (schedule_name is null or schedule_name = '') limit ?"))
 
 (defmethod lock-tasks-on-time-sql "h2" [{:keys [^String db-schema]}]
@@ -59,8 +89,106 @@
        " SET status='L',lock_time=?,locked_by=?"
        " WHERE  (status='N' or status = '') and next_run < SYSDATE and %s limit ?"))
 
+(defmethod  get-tasks-on-time-sql "h2" [db-config]
+  (str "SELECT " (g/task-field-list db-config)
+       " FROM " (:db-schema db-config) ".REQUEST"
+       " WHERE  lock_time=? and status='L' and locked_by=?"))
 
+(defmethod  cleanup-exited-worker-sql "h2" [{:keys [^String db-schema]}]
+  (str "MERGE INTO " db-schema ".REQUEST AS T "
+       " USING ( SELECT REQ_ID, CASEWHEN(RES_REQ_ID IS NULL, 'N' , 'R') AS STATUS  FROM " db-schema ".REQUEST"
+       " LEFT JOIN " db-schema ".RESPONCE"
+       " ON REQ_ID=RES_REQ_ID WHERE STATUS='L' AND LOCKED_BY=? ) AS S ON T.REQ_ID=S.REQ_ID "
+       "WHEN MATCHED THEN UPDATE SET T.STATUS=S.STATUS;"))
+
+(defmethod  post-task-result-sql "h2" [{:keys [^String db-schema]}]
+  (str "INSERT INTO " db-schema ".RESPONCE"
+       "(RES_REQ_ID, RESULT, CLOSE_TIME)"
+       " VALUES(?,?,SYSDATE)"))
+
+(defmethod reschedule-task-sql "h2" [{:keys [^String db-schema]}]
+  (str "UPDATE " db-schema ".REQUEST "
+       "SET status = case attempt > 1 when true then'N'else'E'end,"
+       "next_run = DATEADD(SECOND,retry_interval,next_run), "
+       "attempt=attempt-1 "
+       "WHERE status='L' and req_id=?"))
+
+(defmethod update-or-insert-result-factory "h2" [{:keys [^String db-schema]}]
+  (let [update-sql [(str "UPDATE " db-schema ".RESPONCE "
+                         " SET   BODY=?, STATUS=?, FINISHED=?, CLOSE_TIME=? "
+                         " WHEN RES_REQ_ID=?")]
+        insert-sql [(str "INSERT INTO " db-schema ".RESPONCE(BODY, STATUS, FINISHED, CLOSE_TIME,RES_REQ_ID) "
+                         " VALUES(?,?,?,?,?)")]]
+    (fn  [t-con  ^String rec-id ^String body ^Integer status ^String finished]
+      (let [close_time (unixtime->timestamp (tod))
+            r (jdbc/execute! t-con (conj update-sql body status finished close_time rec-id))]
+        (if (zero? (first r))
+          (jdbc/execute! t-con (conj insert-sql body status finished close_time rec-id))
+          r)))))
 ;; H2 methods END 
+
+;; Postgres methods 
+(defmethod lock-task-sql-sch "postgres" [{:keys [^String db-schema]}]
+  (str "UPDATE "  db-schema ".REQUEST"
+       " SET status='L',locked_by=?,lock_time=CURRENT_TIMESTAMP"
+       " WHERE  req_id IN "
+       " ( SELECT req_id FROM " db-schema ".REQUEST"
+       " WHERE (status='N' or status = '') and next_run < CURRENT_TIMESTAMP and schedule_name=? limit ?)"))
+
+(defmethod lock-task-sql-nsch "postgres" [{:keys [^String db-schema]}]
+  (str "UPDATE "  db-schema ".REQUEST"
+       " SET status='L',locked_by=?,lock_time=CURRENT_TIMESTAMP"
+       " WHERE  req_id IN "
+       " ( SELECT req_id FROM " db-schema ".REQUEST"
+       " WHERE  (status='N' or status = '') and next_run < CURRENT_TIMESTAMP and (schedule_name is null or schedule_name = '') limit ?)"))
+
+
+(defmethod lock-tasks-on-time-sql "postgres" [{:keys [^String db-schema]}]
+  (str "UPDATE " db-schema ".REQUEST"
+       " SET status='L',lock_time=?::TIMESTAMP,locked_by=?"
+       " WHERE  req_id IN "
+       " ( SELECT req_id FROM " db-schema ".REQUEST"
+       " WHERE  (status='N' or status = '') and next_run < CURRENT_TIMESTAMP and %s limit ?)"))
+
+(defmethod  get-tasks-on-time-sql "postgres" [db-config]
+  (str "SELECT " (g/task-field-list db-config)
+       " FROM " (:db-schema db-config) ".REQUEST"
+       " WHERE  lock_time=?::TIMESTAMP and status='L' and locked_by=?"))
+
+(defmethod  cleanup-exited-worker-sql "postgres" [{:keys [^String db-schema]}]
+  (str "UPDATE " db-schema ".REQUEST AS T "
+       " SET STATUS=S.STATUS"
+       " FROM ( SELECT REQ_ID, CASE WHEN RES_REQ_ID IS NULL THEN 'N' ELSE 'R' END AS STATUS  FROM " db-schema ".REQUEST"
+       " LEFT JOIN " db-schema ".RESPONCE"
+       " ON REQ_ID=RES_REQ_ID WHERE STATUS='L' AND LOCKED_BY=? ) S "
+       " WHERE T.REQ_ID=S.REQ_ID"))
+
+(defmethod  post-task-result-sql "postgres" [{:keys [^String db-schema]}]
+  (str "INSERT INTO " db-schema ".RESPONCE"
+       "(RES_REQ_ID, RESULT, CLOSE_TIME)"
+       " VALUES(?,?,CURRENT_TIMESTAMP)"))
+
+(defmethod reschedule-task-sql "postgres" [{:keys [^String db-schema]}]
+  (str "UPDATE " db-schema ".REQUEST "
+       "SET status = case attempt > 1 when true then'N'else'E'end,"
+       "next_run = next_run + retry_interval * interval '1 second', "
+       "attempt=attempt-1 "
+       "WHERE status='L' and req_id=?"))
+
+(defmethod update-or-insert-result-factory "postgres" [{:keys [^String db-schema]}]
+  (let [update-sql [(str "UPDATE " db-schema ".RESPONCE "
+                         " SET   BODY=?, RES_STATUS=?, FINISHED=?, CLOSE_TIME=?::TIMESTAMP "
+                         " WHEN RES_REQ_ID=?")]
+        insert-sql [(str "INSERT INTO " db-schema ".RESPONCE(BODY, RES_STATUS, FINISHED, CLOSE_TIME,RES_REQ_ID) "
+                         " VALUES(?,?,?,?::TIMESTAMP,?)")]]
+    (fn  [t-con  ^String rec-id ^String body ^Integer status ^String finished]
+      (let [close_time (unixtime->timestamp (tod))
+            r (jdbc/execute! t-con (conj update-sql body status finished close_time rec-id))]
+        (if (zero? (first r))
+          (jdbc/execute! t-con (conj insert-sql body status finished close_time rec-id))
+          r)))))
+
+;; Postgres methods END 
 
 
 ;;
@@ -116,19 +244,18 @@
 (defn get-tasks-factory
   "Select tasks locked for worker"
   [db-config]
-  (let [db-schema (:db-schema db-config )
-        sql (str "SELECT "(g/task-field-list db-config)" FROM "
+  (let [db-schema (:db-schema db-config)
+        sql (str "SELECT " (g/task-field-list db-config) " FROM "
                  db-schema ".REQUEST LEFT JOIN " db-schema ".RESPONCE"
                  " ON REQ_ID=RES_REQ_ID "
                  " WHERE  (RES_REQ_ID is NULL or finished='f') and status='L' and locked_by=?")]
     (fn [^String locker]
-      (jdbc/query   @db [sql locker]))))
+      (try
+        (jdbc/query   @db [sql locker])
+        (catch Exception e (errorf "Exception %s for %s" (ex-message e) sql))))))
 
 
-(defn-  get-tasks-on-time-sql [db-config]
-  (str "SELECT " (g/task-field-list db-config)
-       " FROM " (:db-schema db-config) ".REQUEST"
-       " WHERE  lock_time=? and status='L' and locked_by=?"))
+
 
 (defn task-reader-factory
   "Lock task for pusher  according to specified condition.
@@ -141,17 +268,12 @@
       (let [lock-time (unixtime->timestamp (tod))]
         (jdbc/with-db-transaction [t-con @db]
           (when (< 0  (first (jdbc/execute! t-con [(format lock-sql condition)
-                                            lock-time
-                                            pusher-id
-                                            chunk_size])))
+                                                   lock-time
+                                                   pusher-id
+                                                   chunk_size])))
             (jdbc/query   t-con [get-sql  lock-time pusher-id])))))))
 
-(defn- reschedule-task-sql [{:keys [^String db-schema]}]
-  (str "UPDATE " db-schema ".REQUEST "
-       "SET status = case attempt >= execution_retries when true then'E'else'N'end,"
-       "next_run = DATEADD(SECOND,retry_interval,next_run), "
-       "attempt=attempt+1 "
-       "WHERE status='L' and req_id=?"))
+
 
 (defn reschedule-task-factory [dbconfig]
   (let [sql (reschedule-task-sql dbconfig)]
@@ -176,7 +298,7 @@
                               " LEFT JOIN " db-schema ".RESPONCE ON REQ_ID=RES_REQ_ID "
                               " WHERE  STATUS='L' AND (RES_REQ_ID is NULL or finished='f'))"))))
 
-(defn add-task-result-factory
+#_(defn add-task-result-factory
   "Insert task result generated by pusher"
   [{:keys [^String db-schema]}]
   (let [result (keyword (str db-schema ".responce"))]
@@ -186,14 +308,29 @@
                                 :res_status status
                                 :finished "t"
                                 :close_time (unixtime->timestamp (tod))}))))
+(defn add-task-result-factory
+  "Insert task result generated by pusher"
+  [{:keys [^String db-schema ^String db-type]}]
+  (let [sql (case db-type
+              "postgres"
+              (str "INSERT INTO " db-schema ".RESPONCE"
+                   "(RES_REQ_ID, RESULT, RES_STATUS, FINISHED, CLOSE_TIME) "
+                   "VALUES(?,?,?,'t',?::TIMESTAMP)")
+              (str "INSERT INTO " db-schema ".RESPONCE"
+                   "(RES_REQ_ID, RESULT, RES_STATUS, FINISHED, CLOSE_TIME) "
+                   "VALUES(?,?,?,'t',?)"))]
+    (fn [^String rec-id ^String body ^Integer status]
+      (jdbc/execute! @db [sql rec-id body status (unixtime->timestamp (tod))]))))
 
-(defn- update-or-insert-result [t-con result row rec-id]
-  (let [r (jdbc/update! t-con result row ["RES_REQ_ID=?" rec-id])]
-    (if (zero? (first r))
-      (jdbc/insert! t-con result row)
-      r)))
+#_(defn- update-or-insert-result [t-con result row rec-id]
+    (let [r (jdbc/update! t-con result row ["RES_REQ_ID=?" rec-id])]
+      (if (zero? (first r))
+        (jdbc/insert! t-con result row)
+        r)))
 
-(defn update-task-result-factory [{:keys [^String db-schema]}]
+
+
+#_(defn update-task-result-factory [{:keys [^String db-schema]}]
   (let [result (keyword (str db-schema ".responce"))]
     (fn  [^String rec-id ^String body ^Integer status ^String finished]
       (try
@@ -206,9 +343,23 @@
                                    rec-id))
 
         (catch SQLException e
+          (errorf  "Can't insert or update task %s result into DB. Error %s" rec-id (ex-message e)))
+        (catch BatchUpdateException e
           (errorf  "Can't insert or update task %s result into DB. Error %s" rec-id (ex-message e)))))))
 
-(defn update-task-result-and-reschedule-factory [dbconfig]
+(defn update-task-result-factory [db-config]
+    (let [ update-or-insert-result (update-or-insert-result-factory db-config)]
+      (fn  [^String rec-id ^String body ^Integer status ^String finished]
+        (try
+          (jdbc/with-db-transaction [t-con @db]
+            (update-or-insert-result t-con  rec-id body status finished))
+          (catch SQLException e
+            (errorf  "Can't insert or update task %s result into DB. Error %s" rec-id (ex-message e)))
+          (catch BatchUpdateException e
+            (errorf  "Can't insert or update task %s result into DB. Error %s" rec-id (ex-message e)))))))
+
+
+#_(defn update-task-result-and-reschedule-factory [dbconfig]
   (let [result (keyword (str (:db-schema dbconfig) ".responce"))
         sql (reschedule-task-sql dbconfig)]
     (fn
@@ -223,32 +374,57 @@
                                    rec-id)
           (jdbc/execute! @db  [sql rec-id]))
         (catch SQLException e
+          (errorf  "Can't reshedule task %s . Error %s" rec-id (ex-message e)))
+        (catch BatchUpdateException e
           (errorf  "Can't reshedule task %s . Error %s" rec-id (ex-message e)))))))
 
+(defn update-task-result-and-reschedule-factory [db-config]
+  (let [update-or-insert-result (update-or-insert-result-factory db-config)
+        sql (reschedule-task-sql db-config)]
+    (fn
+      [^String rec-id ^String body ^Integer status]
+      (try
+        (jdbc/with-db-transaction [t-con @db]
+            (update-or-insert-result t-con  rec-id body status "f")                      
+          (jdbc/execute! @db  [sql rec-id]))
+        (catch SQLException e
+          (errorf  "Can't reshedule task %s . Error %s" rec-id (ex-message e)))
+        (catch BatchUpdateException e
+          (errorf  "Can't reshedule task %s . Error %s" rec-id (ex-message e)))))))
+
+#_(defn post-task-result-factory
+    "Write task result posted by SM. Return (nil) or throw exception"
+    [{:keys [^String db-schema]}]
+    (let [res-table (keyword (str db-schema ".responce"))]
+      (fn
+        [req] (let [{:keys [route-params body]} req]
+                (jdbc/insert! @db res-table {:res_req_id (:action_id route-params)
+                                             :result (slurp body)
+                                             :close_time (unixtime->timestamp (tod))})))))
 (defn post-task-result-factory
   "Write task result posted by SM. Return (nil) or throw exception"
-  [{:keys [^String db-schema]}]
-  (let [res-table (keyword (str db-schema ".responce"))]
+  [db-config]
+  (let [sql (post-task-result-sql db-config)]
     (fn
       [req] (let [{:keys [route-params body]} req]
-              (jdbc/insert! @db res-table {:res_req_id (:action_id route-params)
-                                           :result (slurp body)
-                                           :close_time (unixtime->timestamp (tod))})))))
-(defn write-task-result-factory
-  "Write task result by id. Return (nil) or throw exception"
-  [{:keys [^String db-schema]}]
-  (let [res-table (keyword (str db-schema ".responce"))]
-    (fn [^String id  ^String result]
-      (jdbc/insert! @db res-table {:res_req_id id
-                                   :result result
-                                   :close_time (unixtime->timestamp (tod))}))))
+              (jdbc/execute! @db [sql
+                                  (:action_id route-params)
+                                  (slurp body)])))))
 
-(defn-  cleanup-exited-worker-sql [{:keys [^String db-schema]}]
-  (str "MERGE INTO " db-schema ".REQUEST AS T "
-       " USING ( SELECT REQ_ID, CASEWHEN(RES_REQ_ID IS NULL, 'N' , 'R') AS STATUS  FROM " db-schema ".REQUEST"
-       " LEFT JOIN " db-schema ".RESPONCE"
-       " ON REQ_ID=RES_REQ_ID WHERE STATUS='L' AND LOCKED_BY=? ) AS S ON T.REQ_ID=S.REQ_ID "
-       "WHEN MATCHED THEN UPDATE SET T.STATUS=S.STATUS;"))
+#_(defn write-task-result-factory
+    "Write task result by id. Return (nil) or throw exception"
+    [{:keys [^String db-schema]}]
+    (let [res-table (keyword (str db-schema ".responce"))]
+      (fn [^String id  ^String result]
+        (jdbc/insert! @db res-table {:res_req_id id
+                                     :result result
+                                     :close_time (unixtime->timestamp (tod))}))))
+(defn write-task-result-factory
+  "Write task result by id. Return (1) or throw exception"
+  [db-config]
+  (let [sql (post-task-result-sql db-config)]
+    (fn [^String id  ^String result]
+      (jdbc/execute! @db [sql id result]))))
 
 (defn cleanup-exited-worker-factory
   "Unlock all no finished tasks for worker.
@@ -290,3 +466,7 @@
    :post-result (write-task-result-factory db-config) ;write result using id and result string
    :cleanup (cleanup-exited-worker-factory db-config)
    :get-worker-results (get-worker-results-factory db-config)})
+
+(comment 
+  (configure {:db-schedule "ASYNC" :db-type "postgres"})
+  (configure {:db-schedule "ASYNC" :db-type "h2"}))

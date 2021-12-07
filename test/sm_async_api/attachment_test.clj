@@ -1,7 +1,6 @@
 (ns ^:attachment sm-async-api.attachment-test
   (:require
    [clojure.test :refer [testing use-fixtures deftest is are]]
-   [clojure.string :as s]
    [cheshire.core :as json]
    [sm_async_api.enum.sm :as sm]
    [sm_async_api.task.attachment :as attachment]
@@ -21,12 +20,17 @@
                                        execute-script]]
    [taoensso.timbre :as timbre]))
 
-(def test-path "test/")
+(def test-path "test/config/run/")
 
+
+(defn base-url []  (str "http://" (-> @config/config :config :module_ip) (-> @config/config :config :base-path)))
+
+(defn async-url [] (-> @config/config :config :async-action-url))
 
 (defn set-url []
   (str "http://" (-> @config/config :config :module_ip) (-> @config/config :config :base-path)
-       "testservice/SDtest/attachments"))
+       "test-service/SDtest/test-action"))
+
 
 (def test-users ["max", "test", ["dima","vs"], ["other1", "other2"]])
 
@@ -62,14 +66,14 @@
    `(relector-set-responce (assoc http-post-return-base :body "{}" :status ~code))))
 
 
-(def test_data (slurp "test/sm_async_api/test_data.sql"))
+(def test_data (slurp "test/config/run/test_data.sql"))
 
 (def test-authorization  "QmFzaWMgbWF4OlNoaXMhITlTRDIzNGRzMTIz")
 
 
 
 (defn fix-read-config [t]
-  (timbre/set-level! :fatal)
+  (timbre/set-level! :debug)
   (config/configure test-path)
   (configure-database)
   (execute-script "TRUNCATE TABLE ASYNC.HOOK;")
@@ -99,82 +103,75 @@
 (defn count-codes [list code]
   (reduce #(if (= (:status %2) code) (inc %1) %1) 0 list))
 
+(defn build-opts [rec-id thread athorization mode subject]
+  {:rec-id rec-id
+   :mode mode
+   :thread thread
+   :headers {"Authorization" athorization}
+   :service "FOSeaist"
+   :subject subject
+   :url (set-url)})
+
+
+(defmacro user-mode-opts [rec-id]
+  `(build-opts ~rec-id "test-thread" test-authorization :user-mode "SDtest"))
+
+(defmacro async-mode-opts [rec-id]
+  `(build-opts ~rec-id "test-thread" test-authorization :async-mode "ASYNCID"))
+
+(def test-body-user-mode (json/generate-string {:Messages ["Sample Message"]
+                                                :ReturnCode 0
+                                                :Interaction {:Otherfield 1
+                                                              :InteractionID  "SDtest"
+                                                              :OneMorefield 2}}))
+
+(def test-body-async-mode (json/generate-string {:Messages ["Sample Message"]
+                                                 :ReturnCode 0
+                                                 :Async {:Otherfield 1
+                                                         :ActionID  "ASYNCID"
+                                                         :OneMorefield 2}}))
+
+(deftest test-build-attachment-url
+  (testing "Build attachment sync mode"
+    (testing " having subject in body"
+      (let [opts (user-mode-opts "test-rec-id")]
+        (is (= (str (base-url) (opts :service) "/" (opts :subject) "/attachments")
+               (attachment/build-attachment-url opts (json/parse-string test-body-user-mode))))))
+    (testing " not having subject in body"
+      (let [opts (user-mode-opts "test-rec-id")]
+        (is (= (str (base-url) (opts :service) "/" (opts :subject) "/attachments")
+               (attachment/build-attachment-url (dissoc opts :subject) (json/parse-string test-body-user-mode)))))))
+  (testing "Build attachment async mode"
+    (let [opts (async-mode-opts "test-rec-id")]
+      (is (= (str (async-url)  "/" (opts :subject) "/attachments")
+             (attachment/build-attachment-url opts (json/parse-string test-body-async-mode)))))))
+
+
 (deftest test-copy-OK
-  (relector-set-responce (reflector-200-attached))
+  (relector-set-responce responce-NO-SERVER-NO-RC)
   (testing (format "Succesfull attachment copy %s mode"
                    (-> @config/config :executors-globals :attachment-copy-mode))
     (let [attachment-list  (@attachment/get-attachments-by-req-id   "test13")
           list-size (count attachment-list)
-          res (attachment/copy "test13" "test-thread" (set-url) test-authorization)]
+          res (attachment/copy  (user-mode-opts "test13")  test-body-user-mode)]
       ;(println "RES "  (json/generate-string res))
-      (is (= list-size (count-codes res 200))))))
-
-
-(deftest test-copy-NO-SERVER-NO-RC
-  (relector-set-responce responce-NO-SERVER-NO-RC)
-  (testing (format "Fail copy %s mode"
-                   (-> @config/config :executors-globals :attachment-copy-mode))
-    (let [attachment-list  (@attachment/get-attachments-by-req-id   "test13")
-          list-size (count attachment-list)
-          res (attachment/copy "test13" "test-thread" (set-url) test-authorization)]
       (is (= list-size (count-codes res 404))))))
 
-
-(deftest test-copy-TOO-MANY-THREADS
-  (relector-set-responce responce-TOO-MANY-THREADS)
-  (testing (format "Fail copy %s mode"
+(deftest test-copy-GENERIC
+  (testing (format "Attachment copy in %s mode."
                    (-> @config/config :executors-globals :attachment-copy-mode))
     (let [attachment-list  (@attachment/get-attachments-by-req-id   "test13")
-          list-size (count attachment-list)
-          res (attachment/copy "test13" "test-thread" (set-url) test-authorization)]
-      (is (= list-size (count-codes res 401))))))
-
-
-(deftest test-copy-NOT-ATHORIZED
-  (relector-set-responce responce-NOT-ATHORIZED)
-  (testing (format "Fail copy %s mode"
-                   (-> @config/config :executors-globals :attachment-copy-mode))
-    (let [attachment-list  (@attachment/get-attachments-by-req-id   "test13")
-          list-size (count attachment-list)
-          res (attachment/copy "test13" "test-thread" (set-url) test-authorization)]
-      (is (= list-size (count-codes res 401))))))
-
-
-(deftest test-copy-BAD-REQ
-  (relector-set-responce responce-BAD-REQ)
-  (testing (format "Fail copy %s mode"
-                   (-> @config/config :executors-globals :attachment-copy-mode))
-    (let [attachment-list  (@attachment/get-attachments-by-req-id   "test13")
-          list-size (count attachment-list)
-          res (attachment/copy "test13" "test-thread" (set-url) test-authorization)]
-      (is (= list-size (count-codes res 400))))))
-
-
-(deftest test-copy-INTERNAL-ERROR
-  (relector-set-responce responce-INTERNAL-ERROR)
-  (testing (format "Fail copy %s mode"
-                   (-> @config/config :executors-globals :attachment-copy-mode))
-    (let [attachment-list  (@attachment/get-attachments-by-req-id   "test13")
-          list-size (count attachment-list)
-          res (attachment/copy "test13" "test-thread" (set-url) test-authorization)]
-      (is (= list-size (count-codes res 500))))))
-
-
-(deftest test-copy-WRONG-CREDS
-  (relector-set-responce responce-WRONG-CREDS)
-  (testing (format "Fail copy %s mode"
-                   (-> @config/config :executors-globals :attachment-copy-mode))
-    (let [attachment-list  (@attachment/get-attachments-by-req-id   "test13")
-          list-size (count attachment-list)
-          res (attachment/copy "test13" "test-thread" (set-url) test-authorization)]
-      (is (= list-size (count-codes res 500))))))
-
-
-(deftest test-copy-UNK-ERROR
-  (relector-set-responce responce-UNK-ERROR)
-  (testing (format "Fail copy %s mode"
-                   (-> @config/config :executors-globals :attachment-copy-mode))
-    (let [attachment-list  (@attachment/get-attachments-by-req-id   "test13")
-          list-size (count attachment-list)
-          res (attachment/copy "test13" "test-thread" (set-url) test-authorization)]
-      (is (= list-size (count-codes res 10000))))))
+          list-size (count attachment-list)]
+      (are  [status responce] (= list-size (do
+                                             (relector-set-responce responce)
+                                             (count-codes
+                                              (attachment/copy  (user-mode-opts "test13")  test-body-user-mode)
+                                              status)))
+        200 (reflector-200-attached)
+        404 responce-NO-SERVER-NO-RC
+        401 responce-TOO-MANY-THREADS
+        401 responce-NOT-ATHORIZED
+        500 responce-INTERNAL-ERROR
+        500 responce-WRONG-CREDS
+        400 responce-BAD-REQ
+        10000 responce-UNK-ERROR))))

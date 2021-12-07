@@ -11,6 +11,8 @@
 
 (defonce hook-action (agent nil))
 
+(defonce attachment-action (agent nil))
+
 (defonce cleaner (agent nil))
 
 (def base-filed-list
@@ -25,21 +27,8 @@
                  "PARAMETERS"
                  "EXPIRE_AT"
                  "SERVICE"
-                 "SUBJECT"]))
-
-#_(def task-field-list
-    (str/join "," ["REQ_ID"
-                   "USER_NAME"
-                   "EXECUTION_MODE"
-                   "EXECUTION_RETRIES"
-                   "RETRY_INTERVAL"
-                   "ACTION"
-                   "STRINGDECODE(PARAMETERS) as PARAMETERS"
-                   "ATTEMPT"
-                   "NEXT_RUN"
-                   "EXPIRE_AT"
-                   "SERVICE"
-                   "SUBJECT"]))
+                 "SUBJECT"
+                 "TAG"]))
 
 ;; 
 ;; Database type dependend. Please add methods for each supported db 
@@ -72,7 +61,8 @@
                  "NEXT_RUN"
                  "EXPIRE_AT"
                  "SERVICE"
-                 "SUBJECT"]))
+                 "SUBJECT"
+                 "TAG"]))
 
 (defmethod full-action-field-list "h2" [dbconfig]
   (str (task-field-list dbconfig) ","
@@ -80,6 +70,29 @@
                       "RES_STATUS"
                       "STRINGDECODE(RESULT) as RESULT"])))
 ;; H2 methods END 
+
+;; Postgres methods 
+(defmethod task-field-list "postgres" [_]
+  (str/join "," ["REQ_ID"
+                 "USER_NAME"
+                 "EXECUTION_MODE"
+                 "EXECUTION_RETRIES"
+                 "RETRY_INTERVAL"
+                 "ACTION"
+                 "PARAMETERS"
+                 "ATTEMPT"
+                 "NEXT_RUN"
+                 "EXPIRE_AT"
+                 "SERVICE"
+                 "SUBJECT"
+                 "TAG"]))
+
+(defmethod full-action-field-list "postgres" [dbconfig]
+  (str (task-field-list dbconfig) ","
+       (str/join "," ["CLOSE_TIME"
+                      "RES_STATUS"
+                      "RESULT"])))
+;; Postgres methods END 
 
 (def _default_retry_interval 300)
 

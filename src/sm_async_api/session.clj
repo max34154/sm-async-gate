@@ -36,7 +36,7 @@
   (for [l (str/split acl #",")] (keyword l)))
 
 (defn new-session [authorization name access-list]
-  (debugf "Session created for %s (%s) with acl %s"  name authorization access-list)
+  ;(debugf "Session created for %s (%s) with acl %s"  name authorization access-list)
   (let [valid (+ (tod-seconds) max_session_length)
         row {:name name
              :password authorization
@@ -85,11 +85,11 @@
 (defn sm-login [user-name user-password auth]
   (let [token-info-response
         @(http/post (config/get-config :auth-url)
-                   {:basic-auth   [user-name user-password]
-                    :content-type :json
-                    :body (format "{user:{name:\"%s\"}}" user-name)
+                    {:basic-auth   [user-name user-password]
+                     :content-type :json
+                     :body (format "{user:{name:\"%s\"}}" user-name)
                     ;:throw-exceptions false
-                    })
+                     })
         {:keys [ReturnCode user]} (auth-token-info token-info-response)
         {:keys [acl]} user]
     (when (= ReturnCode 0)
@@ -99,17 +99,19 @@
   [request auth-fn handler]
   (let [auth ((:headers request) "authorization")
         cred (and auth (b64->string (last (re-find #"^Basic (.*)$" auth))))
-        [user pass] (and cred (str/split (str cred) #":" 2))]
-    (if (auth-fn (str user) (str pass) auth)
-      (do (debug (format  "External athorization succeded for %s" (str user)))
+        [user pass] (and cred (str/split (str cred) #":" 2))
+        user (str user)]
+    (if (auth-fn user (str pass) auth)
+      (do (debug (format  "External athorization succeded for %s" user))
           (handler (assoc request :user_name user)))
       ;{:status 401 :body  "{\"Messages\":[\"Unathorized\"], \"ReturnCode\":28}"}
       http-errors/unathorized-401)))
 
 
 (defn local-auth [request handler]
-  (let [authorization ((:headers request) "authorization")
+  (let [authorization (last (re-find #"^Basic (.*)$" ((:headers request) "authorization")))
         session (get @sessions authorization)]
+    ;(debug "Authorization " authorization)
     (debug  (format "Session %s" (if session "exists"  "doesn't exits")))
     (if (and session (> (session :valid-till) (tod-seconds)))
       (do (debug (format  "User %s has valid session" (str (session :name))))

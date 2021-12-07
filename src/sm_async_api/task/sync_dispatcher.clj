@@ -12,6 +12,8 @@
             spy get-env]]
    [sm_async_api.config :as config]
    [sm_async_api.utils.macro :refer [_case get-channel-id resp-data]]
+   [sm_async_api.utils.dispatcher :as dispatcher :refer [fetch-marker
+                                                         command-exit]]
    [sm_async_api.enum.task_result :as tr]
    [taoensso.timbre.appenders.core :as appenders]
    [sm_async_api.task.writers :as tw]
@@ -26,7 +28,7 @@
 
 (def ^:const default-chank-size 10)
 
-(def ^:const fetch-marker "FETCH")
+;(def ^:const fetch-marker "FETCH")
 
 (def ^:const default-new-task-waiting 2000)
 
@@ -38,7 +40,7 @@
 
 (defonce online-pushers (atom {}))
 
-(def ^:const command-exit "EXIT")
+;(def ^:const command-exit "EXIT")
 
 
 (defn- exit-reader [^String id]
@@ -90,7 +92,8 @@
           (recur (<!! in))))
       (exit-reader id))))
 
-(defn- exit-thread [^String id]
+(defn- exit-thread [^String id local-channel]
+  (when (some? local-channel) (close! local-channel))
   (let [pusher-id ((str/split id #"\/" 2) 0)]
     (if (some? (@online-pushers pusher-id))
       (reportf  "Thread %s exited, %s threads left." id
@@ -123,17 +126,18 @@
           (go
             (loop [input (<! in)
                    retries 0]
-              (if (string? input)
+              (if (or (nil? input) (string? input))
                 (if (= input fetch-marker)
                   (do (>! out  fetch-marker) (recur  (<! in) 0))
-                  (exit-thread id)) ; exit on any string exept "FETCH"
+                  (exit-thread id local-channel)) ; exit on any string exept "FETCH"
 
                 (do (debug  id ":Run task:"  (input :req_id) "Retry:" retries)
-                    (let [result-code  (sp/processor (if async?
-                                                       (do (pusher input id write-channel-callback)
-                                                           (<! local-channel))
-                                                       (pusher input id)) id)]
-                      (debug  id ":Task:"  (input :req_id) "result code " result-code)
+                    (let [result (if async?
+                                   (do (pusher input id write-channel-callback)
+                                       (<! local-channel))
+                                   (pusher input id))
+                          result-code  (sp/processor  result id)]
+                      (debug  id ":Task:"  (input :req_id) " channel" (get-channel-id local-channel) "->result" result "result code " result-code )
                       (_case  result-code
 
                               tr/NEXT-ACTION (recur (<! in) 0)
@@ -155,11 +159,11 @@
                                                         (<! (timeout server-not-available-waiting))
                                                         (recur (<! in) 0))
 
-                              tr/EXIT-THREAD  (exit-thread id)
+                              tr/EXIT-THREAD  (exit-thread id local-channel)
 
                               (do (error id ":Unknow processor responce for  " input)
                                   (recur (<! in) 0))))))))
-          (when (some? local-channel) (close! local-channel)))))))
+          #_(when (some? local-channel) (close! local-channel)))))))
 
 
 (defn build-exclude-list []
@@ -202,7 +206,7 @@
     task-buffer (chan  channel-size)
     reader-control (chan (sliding-buffer 2))
     condition  (build-condition params)
-    global-id (str (config/get-config :async_gateway_id) "::T-" local-id)]
+    global-id (str (config/get-config :async-gateway-id) "::T-" local-id)]
     (if (nil? condition)
       (fatal "Incorrect condition for pusher %s. Supplied parameters %s. Pusher skipped."
              global-id params)
@@ -273,75 +277,78 @@
                             :chank-size (workers :async-chank-size)}
                            "A::Async"
                            (dal-t/task-reader-factory database)
-                           (pusher-factory :global-mode false config workers)
-                           task-executor)))))
-  (info "Pushers are configured."))
+                           (pusher-factory :async-mode false config workers)
+                           task-executor))))))
 
-(defn pusher-manager-kick [[_ {:keys [reader-control]}]]
-  (>!! reader-control  fetch-marker))
+#_(defn pusher-manager-kick [[_ {:keys [reader-control]}]]
+    (>!! reader-control  fetch-marker))
+(def pusher-manager-kick dispatcher/kick)
 
-(defn pusher-manager-kill [[_ {:keys [reader-control task-buffer]}]]
-  (close! reader-control)
-  (close! task-buffer))
+#_(defn pusher-manager-kill [[_ {:keys [reader-control task-buffer]}]]
+    (close! reader-control)
+    (close! task-buffer))
 
-(defn pusher-manager-kill-reader [[_ {:keys [reader-control]}]]
-  (close! reader-control))
+(def pusher-manager-kill dispatcher/kill)
 
-(defn pusher-manager-kill-pusher [[_ {:keys [task-buffer]}]]
-  (close! task-buffer))
+#_(defn pusher-manager-kill-reader [[_ {:keys [reader-control]}]]
+    (close! reader-control))
+(def pusher-manager-kill-reader dispatcher/kill-reader)
 
-(defn pusher-manager-kill-thread [[_ {:keys [task-buffer]}]]
-  (>!!   task-buffer command-exit))
+#_(defn pusher-manager-kill-pusher [[_ {:keys [task-buffer]}]]
+    (close! task-buffer))
+(def pusher-manager-kill-pusher dispatcher/kill-pusher)
 
 
-(defn pusher-manager-kill-all-threads [[_ {:keys [task-buffer threads]}]]
-  (dotimes [_ threads] (>!!   task-buffer command-exit)))
+#_(defn pusher-manager-kill-thread [[_ {:keys [task-buffer]}]]
+    (>!!   task-buffer command-exit))
+(def pusher-manager-kill-thread dispatcher/kill-thread)
 
-(defn print-status [[name {:keys [mode threads condition]}]]
-  (println "Name: "  name " Mode " mode " Threads " threads)
-  (println "      Condition:" condition))
 
-(defn pusher-manager-do-all [action]
-  (doseq [pusher @online-pushers] (action pusher)))
+
+#_(defn pusher-manager-do-all [action]
+    (doseq [pusher @online-pushers] (action pusher)))
+
+(defmacro pusher-manager-do-all [action]
+  `(dispatcher/do-all online-pushers ~action))
 
 (defn pusher-manager-get-pusher [pusher-id]
   (@online-pushers pusher-id))
 
 
-(defn- count-readers [total [_ {:keys [reader-exited]}]]
-  (if (true? reader-exited) total (inc total)))
 
-(defn- count-threads [total [_ {:keys [threads]}]]
-  (if (nil? threads) total (+ total threads)))
-
-(defn start-pushers []
-  (if (some? pusher-manager-run)
-    (pusher-manager-do-all pusher-manager-kick)
-    1))
+(defn start-pushers
+  ([] (start-pushers true))
+  ([kick?]
+   (if (some? (pusher-manager-run))
+     (when kick? (pusher-manager-do-all pusher-manager-kick))
+     1)))
 
 (defn stop-pushers
-  ([] (stop-pushers 10))
-  ([max-wait-time]
-   (pusher-manager-do-all pusher-manager-kill-reader)
-   (loop [t  max-wait-time]
-     (let [active-readers (reduce count-readers 0 @online-pushers)]
-       (if (zero? active-readers)
-         (info "No more readers active")
-         (if  (> t 0)
-           (do
-             (infof "$s readers sill running...")
-             (Thread/sleep 1000)
-             (recur (dec t)))
-           (report "Readers grace period expired. %s readers still running." active-readers)))))
+  ([] (dispatcher/stop online-pushers 10))
+  ([max-wait-time] (dispatcher/stop online-pushers max-wait-time)))
+#_(defn stop-pushers
+    ([] (stop-pushers 10))
+    ([max-wait-time]
+     (pusher-manager-do-all pusher-manager-kill-reader)
+     (loop [t  max-wait-time]
+       (let [active-readers (reduce count-readers 0 @online-pushers)]
+         (if (zero? active-readers)
+           (info "No more readers active")
+           (if  (> t 0)
+             (do
+               (infof "$s readers sill running...")
+               (Thread/sleep 1000)
+               (recur (dec t)))
+             (report "Readers grace period expired. %s readers still running." active-readers)))))
 
-   (pusher-manager-do-all pusher-manager-kill-pusher)
-   (loop [t max-wait-time]
-     (let [active-threads (reduce count-threads 0 @online-pushers)]
-       (if (zero? active-threads)
-         (info "No more pusher threads active.")
-         (if  (> t 0)
-           (do
-             (infof "$s pusher threads sill running...")
-             (Thread/sleep 1000)
-             (recur (dec t)))
-           (report "Pusher grace period expired. %s pusher threads still running." active-threads)))))))
+     (pusher-manager-do-all pusher-manager-kill-pusher)
+     (loop [t max-wait-time]
+       (let [active-threads (reduce count-threads 0 @online-pushers)]
+         (if (zero? active-threads)
+           (info "No more pusher threads active.")
+           (if  (> t 0)
+             (do
+               (infof "$s pusher threads sill running...")
+               (Thread/sleep 1000)
+               (recur (dec t)))
+             (report "Pusher grace period expired. %s pusher threads still running." active-threads)))))))

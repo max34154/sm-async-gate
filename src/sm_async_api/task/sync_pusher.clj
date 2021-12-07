@@ -13,19 +13,21 @@
              [taoensso.timbre.appenders.core :as appenders]
              ;[sm_async_api.config :as config]
              [sm_async_api.session :as session]
+             [sm_async_api.dal.globals :refer [attachment-action]]
              [sm_async_api.utils.macro :refer [_case]]
              [sm_async_api.enum.task_result :as tr]
              [sm_async_api.enum.process_result :as pr]
              [sm_async_api.task.process_result :as result]))
 
 
-(defn- fill-async-request [{:keys [action parameters schedule_name execution_retries retry_interval]}]
+(defn- fill-async-request [{:keys [action parameters schedule_name execution_retries retry_interval req_id]}]
   (json/generate-string     {:action action
                              :parameters parameters
                              :execution
                              {:mode "scheduleOnly"
                               :sheduler schedule_name
                               :retries execution_retries
+                              :attachmentsCount ((@attachment-action :get-attachments-count) req_id)
                               :retiryInterval  retry_interval}}))
 
 
@@ -53,11 +55,13 @@
       (fn [_] :post))))
 
 
-(defn authorization-builder-factory [mode {:keys [async-credentials global-credentials]}]
+(defn authorization-builder-factory [mode {:keys [async-credentials global-credentials global-mode-user]}]
   (case mode
     :user-mode  (fn [action] (session/get-credentials (action :user_name)))
     :async-mode (fn [_] async-credentials)
-    :global-mode (fn [_] global-credentials)))
+    :global-mode (if (= global-mode-user "masked") 
+                   (fn [_] global-credentials)  
+                   (fn [action] (session/get-credentials (action :user_name))))))
 
 (defn body-builder-factory [mode]
   (if (= mode :async-mode)

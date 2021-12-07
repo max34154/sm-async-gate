@@ -1,4 +1,4 @@
-(ns sm_async_api.task.sync_dispatcher_infra_test
+(ns  ^:task  sm-async-api.task.sync-dispatcher-infra-test
   {:clj-kondo/config  '{:linters {:unresolved-symbol
                                   {:exclude [responce-OK
                                              responce-BAD-REQ
@@ -88,7 +88,7 @@
 
 (defn fix-read-config [t]
   (timbre/set-level! :debug)
-  (config/configure "test/")
+ (config/configure "test/config/run/")
   (t))
 
 (deftest build-dispatcher-infra-test
@@ -109,9 +109,10 @@
 (deftest close-channel-test
   (testing "Close channel test"
     (sd/pusher-manager-run)
-    (let [pushers         @sd/online-pushers ]
+    (let [pushers @sd/online-pushers ]
       (Thread/sleep 2000)
-      (sd/shatdown-pushers 2)
+      (sd/stop-pushers 2)
+      ;(sd/shatdown-pushers 2)
       ;(sd/pusher-manager-do-all sd/pusher-manager-kill)
       ;(Thread/sleep 1000)
       (doseq [pusher pushers]

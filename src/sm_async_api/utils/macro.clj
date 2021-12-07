@@ -42,3 +42,7 @@
 
 (defmacro thread-group [thread]
   `((str/split ~thread #"/" 2) 0))
+
+
+(defmacro remove-athorization [req]
+  `(update-in ~req [:headers "authorization"] (constantly "XXXXXXXXXX")) )

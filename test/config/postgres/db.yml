@@ -1,0 +1,8 @@
+db-type: postgres
+db-host: localhost:5432
+db-name: postgres
+db-login: SMAG
+db-schema: ASYNC
+h2-protocol: tcp
+h2-path: null
+db-message-log: enable

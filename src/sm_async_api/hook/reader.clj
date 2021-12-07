@@ -8,6 +8,7 @@
     :refer [log  trace  debug  info  warn  error  fatal  report
             logf tracef debugf infof warnf errorf fatalf reportf
             spy get-env]]
+   [taoensso.timbre.appenders.core :as appenders]
    [clojure.core.async
     :as a
     :refer [>!! <!!
@@ -29,6 +30,9 @@
                       ^String id
                       ^String condition
                       reader]
+  (timbre/with-merged-config
+                {:println {:enabled? false}
+                 :appenders {:spit (appenders/spit-appender {:fname (str "log/" id ".log")})}}
   (debug id ":Waiting for command.")
   (let [new-task-waiting  (or (config/get-executors-globals :new-task-waiting)  hg/default-new-task-waiting)]
     (a/thread
@@ -44,9 +48,9 @@
                   (debug id ":fetched items "
                          (reduce #(str %1 ":"  (:req_id %2))  "" result-set) ":")))
             (if (empty?  result-set)
-              (do (debug id ": no actions available, fall sleep")
-                  (Thread/sleep new-task-waiting)
-                  (>!! in  fetch-marker))
+              (do (debug id ": no actions available, fall sleep for " new-task-waiting "ms")
+                  (>!! in  fetch-marker)
+                  (Thread/sleep new-task-waiting))
               (if (zero? prefetch-marker-position)
                 (do
                   (doseq [result result-set] (>!! out result))
@@ -57,8 +61,9 @@
                     (if (nil? f)
                       (when-not (> pos prefetch-marker-position) (>!! out  fetch-marker))
                       (do
-                        (>!! out f)
+                        (debug id ": queue message " f)
+                        (>!! out  f)
                         (when (= pos prefetch-marker-position) (>!! out  fetch-marker))
                         (recur (rest result-set) (inc pos)))))))))
           (recur (<!! in))))
-      (exit-reader id))))
+      (exit-reader id)))))

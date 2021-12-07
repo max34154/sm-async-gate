@@ -24,7 +24,7 @@
 
 (defn build-opts [{:keys [url method body id headers]}, thread]
   {:url url
-   :method method
+   :method (keyword method)
    :body body
    :thread thread
    :rec-id id
@@ -42,13 +42,13 @@
     workers -  workers configuration, in most cases thes best choise is (config/get-workers) 
    "
   [async-pusher-enabled]
-  (timbre/with-merged-config
-    {:appenders {:spit (appenders/spit-appender {:fname "log/pusher_conf.log"})}}
-    (if (true? async-pusher-enabled)
-      (fn [message thread write-channel-callback]
-        (http/request (build-opts message thread) write-channel-callback))
-      (fn [message thread]
-        @(http/request (build-opts message thread))))))
+  (if (true? async-pusher-enabled)
+    (fn [message thread write-channel-callback]
+      (debugf "Send message %s\n - source %s\n - options %s" (:id message) message (build-opts message thread))
+      (http/request (build-opts message thread) write-channel-callback))
+    (fn [message thread]
+      (debugf "Send message %s\n - source %s\n - options %s" (:id message) message (build-opts message thread))
+      @(http/request (build-opts message thread)))))
 
 
 
@@ -66,6 +66,12 @@
 
 (defn message-sender-factory [async?]
   (let [delete-message (:delete @g/hook-action)
+        log-message (:log-message-delivery @g/hook-action)
+        log-and-delete (if (nil? :log-message-delivery)
+                         (fn [input _ _] (delete-message (:id input)))
+                         (fn [input status body]
+                           (delete-message (:id input))
+                           (log-message input status body)))
         reschedule-message (:reschedule @g/hook-action)]
     (fn [in out ^String id]
       (let [local-channel (when async? (chan))
@@ -77,21 +83,26 @@
           (reportf "%s:Message sender configured for %s mode" id (if (nil? local-channel) "sync" "async"))
           (go
             (loop [input (<! in)]
-              (if (string? input)
-                (when (= input fetch-marker)
-                  (>! out  fetch-marker) (recur  (<! in))) ; exit on any string exept "FETCH"
-                (do (debug  id ":Send message:"  (:id input) "Attempt:" (:attempt input))
-                    (let [{:keys [error status]}   (if async?
-                                                     (do (pusher input id write-channel-callback)
-                                                         (<! local-channel))
-                                                     (pusher input id))]
-                      (debug  id ":Send result for message "  (input :req_id) "  " status)
-                      (if  error
-                        (fatal "Failed, exception: error " error " in attempt to send " input)
-                        (do  (if (or (= (:attempt input) 1)
-                                     (= status http-errors/OK))
-                               (delete-message (:id input))
-                               (reschedule-message (:id input)))
-                             (recur (<! in))))))))
+              (when-not (nil? input)
+                (if (string? input)
+                  (when (= input fetch-marker)
+                    (>! out  fetch-marker) (recur  (<! in))) ; exit on any string exept "FETCH"
+                  (do (debug  id ":Send message:"  (:id input) "Attempt:" (:attempt input))
+                      (let [{:keys [error status body]}   (if async?
+                                                            (do (pusher input id write-channel-callback)
+                                                                (<! local-channel))
+                                                            (pusher input id))]
+                        (debug  id ":Send result for message "  (:id input) ":status:" status ",body:" body)
+                        (when  error
+                          (fatal "Failed, exception: error " error " in attempt to send " input))
+                          ;(do
+                               ;(debug "Attempt: " (:attempt input) "=1? " (= (:attempt input) 1))
+                        (if (or (= (:attempt input) 1)
+                                (= status http-errors/OK))
+                              ;(delete-message (:id input))
+                          (log-and-delete input status body)
+                          (reschedule-message (:id input)))
+                        (recur (<! in));)
+                        )))))
             (exit-thread id)
             (when (some? local-channel) (close! local-channel))))))))

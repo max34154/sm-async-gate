@@ -6,10 +6,11 @@
     :refer [errorf]]))
 
 (defn get-jbody [body headers]
-  (when (s/includes? (:content-type headers) "application/json")
-    (try (json/parse-string body)
-         (catch Exception e
-           (errorf "Error %s on parsing json %s "  (ex-message e) body)))))
+  (when-let [content-type (:content-type headers)]
+   (when (s/includes? content-type "application/json")
+     (try (json/parse-string body)
+          (catch Exception e
+            (errorf "Error %s on parsing json %s "  (ex-message e) body))))))
 
 (defmacro get-RC [body headers]
   `(get (get-jbody ~body ~headers) "ReturnCode"))

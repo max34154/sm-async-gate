@@ -1,4 +1,4 @@
-(ns sm-async-api.task.sync_pusher_test
+(ns ^:task  sm-async-api.task.sync-pusher-test
   {:clj-kondo/config  '{:linters {:unresolved-symbol
                                   {:exclude [responce-OK
                                              responce-BAD-REQ
@@ -17,8 +17,7 @@
    [sm_async_api.task.sync_pusher :as sp]
    [sm_async_api.utils.http_fake :refer :all]
    [clojure.test :refer [deftest testing use-fixtures is are]]
-   [sm_async_api.task.writers]
-   ;[sm_async_api.utils.base64 :as b64]
+   [sm_async_api.task.writers :refer [no-db-writes]]
    [sm_async_api.config :as config]
    [sm_async_api.enum.task_result :as tr]
    [sm_async_api.session :as session]
@@ -26,7 +25,7 @@
    [clojure.walk :refer [keywordize-keys]]
    [cheshire.core :as json]
    [sm-async-api.task.sm_fake_resp :refer :all]
-   [taoensso.timbre :as timbre :refer [spy]]))
+   [taoensso.timbre :as timbre ]))
 
 ;(timbre/merge-config!  {:appenders {:spit (appenders/spit-appender {:fname "log/pusher.log"})}})
 (timbre/merge-config! {:appenders  {:println {:enabled? true}}})
@@ -85,8 +84,10 @@
                 dal-u/get-user (delay get-user)
                 dal-u/delete-user  (delay delete-user)
                 sm_async_api.task.writers/result-writer (delay sm_async_api.task.writers/silent-result-writer)
-                sm_async_api.task.writers/action-rescheduler (delay sm_async_api.task.writers/silent-action-rescheduler)]
-    (config/configure "test/");"test/sm_async_api/")
+                sm_async_api.task.writers/action-rescheduler (delay sm_async_api.task.writers/silent-action-rescheduler)
+                ]
+    (no-db-writes)
+   (config/configure "test/config/run/");"test/sm_async_api/")
     (session/new-session authorization user-name nil)
     (t)))
 
@@ -155,7 +156,7 @@
         tr/EXIT-THREAD   responce-ERROR  ;resule/ERROR
         ))))
 
-(deftest test-asycn-pusher
+(deftest test-async-pusher
   (testing   "Test async mode sync-pusher request structure:"
     (let [resp (request (config/get-config :async-action-url)
                         responce-OK

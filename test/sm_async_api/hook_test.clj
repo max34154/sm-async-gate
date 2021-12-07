@@ -20,14 +20,7 @@
    [sm_async_api.hook.dispatcher :refer [start-messengers
                                          stop-messengers]]))
 
-(def test-path "test/")
-
-;(def local-config (yaml/from-file (str test-path "sm_async.yml")) )'
-
-;(def tmp (s/split (local-config :module_ip) #":") )
-
-
-;(def message-reciver (str "localhost:"  ((s/split (local-config :module_ip) #":") 1)))
+(def test-path "test/config/run/")
 
 (def message-reciver "http://localhost:13080")
 

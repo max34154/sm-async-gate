@@ -4,6 +4,7 @@
                [ring.middleware.content-type :refer [wrap-content-type]]
                [ring.middleware.multipart-params :refer [wrap-multipart-params]]
                [bidi.ring :refer (make-handler)]
+               [sm-async-api.request.hook :as hook]
                [clojure.string :as str]
                [cheshire.core :as json]
                [ring.middleware.json :refer [wrap-json-body]]
@@ -17,7 +18,7 @@
                [sm_async_api.config :as config]
                [sm_async_api.http_errors :as http-errors])
   (:gen-class)
-  (:import [java.sql SQLIntegrityConstraintViolationException])
+  (:import [java.sql SQLIntegrityConstraintViolationException BatchUpdateException])
   (:import [java.net URLEncoder]))
 
 (defn set-service [req]
@@ -186,7 +187,11 @@
                      (if (str/includes? content-type  "multipart/form-data")
                        (insert-multypart-attachment req)
                        (insert-attachment req)))))}
+        
         (catch  SQLIntegrityConstraintViolationException e  (error (ex-message e))
+                (http-errors/validation-error-406
+                 (str "Action " (-> req :route-params :action_id) " does not exist.")))   
+        (catch  BatchUpdateException e  (error (ex-message e))
                 (http-errors/validation-error-406
                  (str "Action " (-> req :route-params :action_id) " does not exist.")))
         (catch  AssertionError e (error (ex-message e))
@@ -203,7 +208,7 @@
   (let [get-attachments-list (dal-a/get-attachments-list-factory (:database @config/config))]
     (fn [req]
       {:status 200
-       :headers {"content-type" "application/js on"}
+       :headers {"content-type" "application/json"}
        :body (json/generate-string (get-attachments-list req))})))
 
 (defn attachments-factory []
@@ -243,7 +248,14 @@
                  ["Action/" :action_id "/attachments"]  (attachments-factory)
                  ["Action/" :action_id "/run"] {:post (run-action-factory)}
                  ["Action/" :action_id "/" :attachment_id] {:get (get-attachment-factory)}
-                 ["Debug/"] debug-print-request}
+                 ["Debug/"] debug-print-request
+                 ;["Hook"] {:put (hook/update-or-insert-hook-factory)}
+                 ["Hook"] {:put (hook/update-or-insert-hook-factory)}
+                 ["Hook/" :action_id] (hook/hook-factory)
+                 ["Hook/" :action_id "/preview"] (hook/test-hook-factory :preview)
+                 ["Hook/" :action_id "/testrun"] (hook/test-hook-factory :test-run)
+                 ["HookList/"] {:get (hook/get-all-hooks-factory)}
+                 }
 
                 (for [route  collections] ;(get cconfig/config :collections)
                   (build_route route)))))

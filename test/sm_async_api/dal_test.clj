@@ -9,29 +9,49 @@
                                        execute-script
                                        reload-hook-templates
                                        unload-hook-template]]
-   [sm_async_api.dal.globals :as g :refer [task-action 
-                                     request-action 
-                                     hook-action]]
+   [sm_async_api.dal.globals :as g :refer [task-action
+                                           request-action
+                                           hook-action]]
    [sm_async_api.dal.hook :as dal-h]
    [sm-async-api.hook.hook :as hook])
   #_{:clj-kondo/ignore [:unused-import]}
-  (:import [java.sql SQLException SQLIntegrityConstraintViolationException]))
+  (:import [java.sql SQLException SQLIntegrityConstraintViolationException BatchUpdateException]))
 
 (def test_user  "max")
 (def test_schedule "test_sch")
 (def test_chunk_size 3)
 
+(def ^:dynamic *test_data*)
 
-(def test_data (slurp "test/sm_async_api/test_data.sql"))
+(def ^:dynamic *db-type*)
+
+;(def test_data (slurp "test/sm_async_api/test_data.sql"))
+
+;; !! Some delays still active after test finished
+;; !! Due to this problem is not possible to test both DB at once 
+;; !! REPL must be restarted between therpasses.
+#_(def configs [;{:db-type "h2", :path "test/", :test_data (slurp "test/sm_async_api/test_data_h2.sql")}
+              {:db-type "postgres", :path "test/config/postgres/", :test_data (slurp "test/sm_async_api/test_data_pg.sql")}
+              ])
+
+#_(defn fix-test-db [t]
+  (doseq [db configs]
+    (binding [*test_data* (:test_data db)
+              *db-type* (:db-type db)]
+      
+      (config/configure (:path db))
+      (println "Run for dbtype " *db-type* " with config " (:path db))
+      (configure-database)
+      (t))))
 
 (defn fix-test-db [t]
-  (config/configure "test/")
-  (configure-database)
-  (t))
+     (config/configure "test/config/run/")
+      (configure-database)
+      (t))
 
 (defn fix-test-data  [t]
   (execute-script "TRUNCATE TABLE ASYNC.ATTACHMENT; TRUNCATE TABLE ASYNC.MESSAGE; TRUNCATE TABLE ASYNC.HOOK; TRUNCATE TABLE ASYNC.RESPONCE;DELETE FROM ASYNC.REQUEST;")
-  (execute-script test_data)
+  (execute-script (slurp "test/config/run/test_data.sql"))
   (t))
 
 (use-fixtures :once fix-test-db)
@@ -64,10 +84,13 @@
               (first (post-task-result (:req_id (first
                                                  (get-tasks test_user)))
                                        "{\"Result Code\": 0}"))]
-          (is (= nil result))))
+          (is (= 1 result))))
 
       (testing "Attempt to write result twice for same task"
-        (is (thrown? SQLIntegrityConstraintViolationException
+        (is  (thrown? BatchUpdateException
+                      (post-task-result  (:req_id (first ((@task-action :get-worker-results)  test_user)))
+                                         "{\"Result Code\": 0}")))
+        #_(is (thrown? SQLIntegrityConstraintViolationException
                      (post-task-result  (:req_id (first ((@task-action :get-worker-results)  test_user)))
                                         "{\"Result Code\": 0}")))))))
 
@@ -76,7 +99,7 @@
   (let [{:keys [req_id attempt next_run]}
         (first ((@request-action :get) {:route-params {:action_id prev_req_id}}))]
     (and (not (nil? req_id))
-         (= (- attempt  prev-att) 1)
+         (= (- prev-att attempt) 1)
          (= (- (clj-time/to-long next_run)
                (clj-time/to-long prev-next_run))
             (* prev-retry_interval 1000)))))
@@ -88,6 +111,7 @@
           (first ((@task-action :get) test_user))
           result (if (nil? req_id) false
                      (check_reschedule  req_id attempt next_run retry_interval))]
+      (is (some? req_id))
       (is (= true result)))))
 
 
@@ -105,6 +129,9 @@
    :retry_interval 1})
 
 (def my-hook (assoc hook-standart :user_name "hook owner"))
+
+
+(def not-my-hook (assoc hook-standart :user_name "other owner"))
 
 (def retry_interval_20 (assoc hook-standart :name "retry_interval_20"
                               :retry_interval 20))
@@ -135,9 +162,13 @@
   (when (nil? @hook-action) (throw (Exception. "hook-action is nil")))
   (when (nil? (@hook-action :add-template)) (throw (Exception. "hook-action :add-template is nil")))
   (let [get-template (@hook-action :get-template)
-        add-template (@hook-action :add-template)]
+        add-template (@hook-action :add-template)
+        get-all-templates (@hook-action :get-all-templates)
+        get-all-available-templates (@hook-action :get-all-available-templates)
+        delete-template (@hook-action :delete-template)]
     (add-template hook-standart)
     (add-template my-hook)
+    (add-template not-my-hook)
     (add-template retry_interval_nil)
     (add-template max-retiries-nil)
     (add-template max-retiries-0)
@@ -166,7 +197,18 @@
       (is (= max-max-retries
              (:max_retries (first (get-template (->opts max-retiries-201))))))
       (is (= (hook-standart :max_retries)
-             (:max_retries (first (get-template (->opts hook-standart)))))))))
+             (:max_retries (first (get-template (->opts hook-standart)))))))
+
+    (testing "Get all templates "
+      (is (= 8 (count (get-all-templates)))))
+
+    (testing "Get all available templates "
+      (is (= 7 (count (get-all-available-templates "hook owner")))))
+
+    (testing  "Delete hook"
+      (is (= 1 (first (delete-template  "test-hook" "hook owner"))))
+      (is (= "0"  (:user_name (first (get-template (->opts my-hook)))))))))
+
 
 (def no-method-hook (dissoc (assoc hook-standart :name "no-method")))
 
@@ -212,8 +254,9 @@
       (reload-hook-templates (@config/config :database) "test/" true)
       (is (= 7 (count (get-all-templates)))))
     (testing "Delete template "
-      ((:delete-template @hook-action) (first (get-all-templates)))
-      (is (= 6 (count (get-all-templates)))))
+      (let [{:keys [name user_name]} (first (get-all-templates))]
+        ((:delete-template @hook-action) name user_name)
+        (is (= 6 (count (get-all-templates))))))
     (testing "Reload without cleaning db"
       (reload-hook-templates (@config/config :database) "test/" true)
       (is (= 7 (count (get-all-templates)))))))
@@ -250,7 +293,7 @@
 
 (defn get-STATUS [message]  ((message :body) "STATUS"))
 
-(defn get-FullBody [message] 
+(defn get-FullBody [message]
   ((message :body) "FullBody"))
 
 (def post-message-request {:body {:status 200
@@ -270,4 +313,25 @@
       (is (= (hook-parametric :retry_interval) (message :retry_interval)))
       (is (= ["It's OK"] (get-MS message)))
       (is (=  (json/parse-string (-> post-message-request :body :parameters))  (get-FullBody message)))
-      (is g/default-sm-user-name (get-user-name message)))))
+      (is g/default-sm-user-name (get-user-name message))
+      (testing "Reschedule message "
+        (let [id (message :id)
+              prev-next_run (message :next_run)
+              prev-retry_interval (* 1000 (message :retry_interval))]
+          ((@hook-action :reschedule) id)
+          (Thread/sleep (+ prev-retry_interval 1000))
+          (let [{:keys [attempt next_run]} (first ((@hook-action :message-reader) "test-messanger" 10 dal-h/global-lock-condition-global-only))]
+            (is (= (dec (hook-parametric :max_retries)) attempt))
+            (is (= (- (clj-time/to-long next_run)
+                      (clj-time/to-long prev-next_run))
+                   prev-retry_interval)))))
+      (testing "Message queue length "
+        (is (= 1 ((@hook-action :get-message-queue-length)))))
+      (testing "Delete expired message"
+        ((@hook-action :reschedule) (message :id))
+        (Thread/sleep (+ (* 1000 (message :retry_interval)) 1000))
+        ((@hook-action :delete-expired) 10)
+        (is (= 1 ((@hook-action :get-message-queue-length))))
+        ((@hook-action :delete-expired) 0)
+        (is (= 0 ((@hook-action :get-message-queue-length))))))))
+

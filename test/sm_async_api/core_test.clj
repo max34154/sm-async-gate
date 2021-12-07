@@ -4,12 +4,15 @@
                                   {:exclude [testing use-fixtures deftest is are]}
                                   :refer-all {:level :off}}}}
   (:require [clojure.java.io :as io]
-            ;[org.httpkit.server :as httpkit]
+            [sm-async-api.hook.hook :as hook]
             [org.httpkit.client :as http]
             [cheshire.core :as json]
             [sm_async_api.config :as config]
             ;[sm_async_api.dal.configure :refer [configure-database]]
-            ;[sm_async_api.dal.globals :refer [task-action request-action]]
+            [sm_async_api.dal.globals :refer [hook-action]]
+            [sm_async_api.utils.reflector :refer [relector-set-responce
+                                                  reflector-start
+                                                  reflector-stop]]
             [clojure.test :refer :all]
             [sm-async-api.core :refer [startup shutdown]]))
 
@@ -62,8 +65,7 @@
 :user_name max, 
 :query-string nil, 
 :body #object[org.httpkit.BytesInputStream 0x3bdf9642 BytesInputStream[len=31305]], 
-:multipart-params {}, :scheme :http, :request-method :post}"
-)
+:multipart-params {}, :scheme :http, :request-method :post}")
 
 (def waiting_body
   "{ \"schedule_name\":\"test_sch\",\"execution_mode\":\"S\",
@@ -116,13 +118,13 @@
       (if (nil? @rec_id)
         (is false)
         (let [{:keys [status  body]}
-              @(http/put (str action-url "Action/" @rec_id "/run")
-                         {:basic-auth basic-auth
-                          :headers headers
-                          :body ""})]
-          (is (and (= 200 status)
-                   (not (nil? body))
-                   (= 0 (:ReturnCode (json/parse-string body keyword))))))))))
+              @(http/post (str action-url "Action/" @rec_id "/run")
+                          {:basic-auth basic-auth
+                           :headers headers
+                           :body ""})]
+          (is (= 200 status))
+          (is (not (nil? body)))
+          (is (= 0 (:ReturnCode (json/parse-string body keyword)))))))))
 
 
 (def wrong_execution_mode
@@ -230,10 +232,112 @@
                      :header {"Content-Type"  "application/json"}
                      :body standart_body}))
 
+(defn insert_tag [tag] (str hook/tag-border tag hook/tag-border))
+
+(def message-reciver "http://localhost:13080/SM/9/rest/Service")
+
+(def hook-parametric
+  {:name "hook-parametric"
+   :headers (str "{\"Content-Type\":\"application/json\","
+                 "\"Connection\": \"keep-alive\""
+                 ;",\"Authorization\":\"" (insert_tag "REQ_ID")  "\""
+                 "}")
+   :user_name "0"
+   :method "get"
+   :url (str message-reciver );"?user-name=" (insert_tag "USER_NAME"))
+   :body (str "{\"RC\":" (insert_tag "RC") ","
+              "\"MS\": " (insert_tag "MS") ","
+              "\"REQ_ID\":\"" (insert_tag "REQ_ID")  "\","
+              "\"STATUS\": " (insert_tag "STATUS") ","
+              "\"FullBody\":" (insert_tag "BODY")  "}")
+   :max_retries  3
+   :retry_interval 11})
+;{"RC":%!%!%RC%!%!%,"MS": %!%!%MS%!%!%,"REQ_ID":"%!%!%REQ_ID%!%!%","STATUS": %!%!%STATUS%!%!%,"FullBody":%!%!%BODY%!%!%}
+(def hook-parametric2 (assoc hook-parametric :max_retries 4 :retry_interval 12 :method "put"))
+
+(deftest test-manipulations-hook
+  (testing (str "Add hook - " action-url "HookAdd")
+    (let [resp
+          @(http/put (str action-url "Hook")
+                     {:basic-auth basic-auth
+                      :headers headers
+                      :body (json/generate-string hook-parametric)})
+          {:keys [status]} resp]
+      (is (= 200 status))))
+  (testing "Update hook"
+    (let [{:keys [status]}
+          @(http/put (str action-url "Hook")
+                     {:basic-auth basic-auth
+                      :headers headers
+                      :body (json/generate-string hook-parametric2)})]
+      (is (= 200 status))))
+  (testing "Get hook"
+    (let [{:keys [status body]}
+          @(http/get (str action-url "Hook/" (:name hook-parametric))
+                     {:basic-auth basic-auth
+                      :headers headers})
+          {:keys [max_retries retry_interval method]} (:Hook (json/parse-string body true))]
+      (is (= 200 status))
+      (is (= (hook-parametric2 :max_retries) max_retries))
+      (is (= (hook-parametric2 :retry_interval) retry_interval))
+      (is (= (hook-parametric2 :method) method))))
+
+  (testing "Delete hook"
+    (let [{:keys [status]}
+          @(http/delete (str action-url "Hook/" (:name hook-parametric))
+                        {:basic-auth basic-auth
+                         :headers headers})]
+      (is (= 200 status)))
+    (let [{:keys [status]}
+          @(http/get (str action-url "Hook/" (:name hook-parametric))
+                     {:basic-auth basic-auth
+                      :headers headers})]
+      (is (= 404 status)))))
+
+(def preview-request-body
+  (json/generate-string
+   {:responce {:ReturnCode 0
+               :Messages ["Test message!!"]
+               :OtherStaff "Other Staff"}
+    :responce_status 200}))
+
+;:body "{\"RC\":,\"MS\": [\"\"],\"REQ_ID\":\"61A1138C-1-1AEF\",\"STATUS\": 200,\"FullBody\":{\"responce\":{\"ReturnCode\":0,\"Messages\":[\"Test message!!\"],\"OtherStaff\":\"Other Staff\"},\"responce_status\":200}}"
+
+(deftest test-hook-preview
+  (testing "Hook user test"
+    (testing "Add hook"
+      (let [{:keys [status]}
+            @(http/put (str action-url "Hook")
+                       {:basic-auth basic-auth
+                        :headers headers
+                        :body (json/generate-string hook-parametric)})]
+        (is (= 200 status))
+        (when (= 200 status)
+          (testing "Hook preview"
+            (let    [{:keys [status body]}
+                     @(http/get (str action-url "Hook/" (:name hook-parametric) "/preview")
+                                {:basic-auth basic-auth
+                                 :headers headers
+                                 :body preview-request-body})]
+              ;(println "BOOODY " body)
+              (is (= 200 status))))
+          (testing "Hook testrun"
+            (reflector-start)
+            ;(Thread/sleep 50000)
+            (let    [{:keys [status]}
+                     @(http/get (str action-url "Hook/" (:name hook-parametric) "/testrun")
+                                {:basic-auth basic-auth
+                                 :headers headers
+                                 :body preview-request-body})]
+              (is (= 200 status)))
+            (is (= 1 ((@hook-action :get-message-queue-length))))
+            (Thread/sleep 10000)
+            (is (= 0 ((@hook-action :get-message-queue-length))))
+            (reflector-stop)))))))
 
 (defn fix-test-core [t]
-  (startup  3000 "test/" )
-  (swap! sm_async_api.config/config update-in [:config :auth-url] (fn [_]"http://212.11.152.7:13080/SM/9/rest/asyncuser"))
+  (startup  3000 "test/config/run/")
+  (swap! sm_async_api.config/config update-in [:config :auth-url] (fn [_] "http://212.11.152.7:13080/SM/9/rest/asyncuser"))
   (t)
   (shutdown))
 
