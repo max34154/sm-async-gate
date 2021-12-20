@@ -15,6 +15,7 @@
               :refer [log  trace  debug  info  warn  error  fatal  report
                       logf tracef debugf infof warnf errorf fatalf reportf
                       spy get-env]]
+             [taoensso.timbre.appenders.core :as appenders]
              [sm_async_api.config :as config]
              [sm_async_api.dal.user :as dal-u]))
 
@@ -104,19 +105,23 @@
     (if (auth-fn user (str pass) auth)
       (do (debug (format  "External athorization succeded for %s" user))
           (handler (assoc request :user_name user)))
-      ;{:status 401 :body  "{\"Messages\":[\"Unathorized\"], \"ReturnCode\":28}"}
-      http-errors/unathorized-401)))
+      (do ;{:status 401 :body  "{\"Messages\":[\"Unathorized\"], \"ReturnCode\":28}"}
+        (debug (format  "External athorization declined for %s" user))
+        http-errors/unathorized-401))))
 
 
 (defn local-auth [request handler]
-  (let [authorization (last (re-find #"^Basic (.*)$" ((:headers request) "authorization")))
-        session (get @sessions authorization)]
+  (timbre/with-merged-config
+    {:appenders {:println {:enabled? false}
+                 :spit (appenders/spit-appender {:fname "log/session.log"})}}
+    (let [authorization (last (re-find #"^Basic (.*)$" ((:headers request) "authorization")))
+          session (get @sessions authorization)]
     ;(debug "Authorization " authorization)
-    (debug  (format "Session %s" (if session "exists"  "doesn't exits")))
-    (if (and session (> (session :valid-till) (tod-seconds)))
-      (do (debug (format  "User %s has valid session" (str (session :name))))
-          (handler (assoc request :user_name (session :name))))
-      (basic-authentication-request request sm-login handler))))
+    ;  (debug  (format "Session %s for user %" (if session "exists"  "doesn't exits")))
+      (if (and session (> (session :valid-till) (tod-seconds)))
+        (do (debug (format  "User %s has valid session" (str (session :name))))
+            (handler (assoc request :user_name (session :name))))
+        (basic-authentication-request request sm-login handler)))))
 
 
 (defn warp-auth [handler]

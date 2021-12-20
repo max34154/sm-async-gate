@@ -115,8 +115,9 @@
 
 (defn- reflector-routes [base-path]
   [base-path  {[:service]    make-async-responce
-               [:service "/" :subject] {:get  make-sync-responce}
-               [:service "/" :subject "/" :action] make-sync-responce}])
+               [:service "/" :subject]  make-sync-responce
+               [:service "/" :subject "/" :action] make-sync-responce
+               [:service "/" :subject "/action/" :action] make-sync-responce}])
 
 (defn- reflector-app [routes]
   (-> routes

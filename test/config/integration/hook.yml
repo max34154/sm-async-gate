@@ -1,0 +1,14 @@
+- {name: test-hook, user_name: '0', headers: null, body: null, url: 'loocalhost:13080',
+  max_retries: 199, retry_interval: 10, method: post}
+- {name: test-hook, user_name: hook owner, headers: null, body: null, url: 'loocalhost:13080',
+  max_retries: 199, retry_interval: 10, method: post}
+- {name: retry_interval_nil, user_name: '0', headers: null, body: null, url: 'loocalhost:13080',
+  max_retries: 199, retry_interval: 10, method: post}
+- {name: max-retiries-nil, user_name: '0', headers: null, body: null, url: 'loocalhost:13080',
+  max_retries: 1, retry_interval: 10, method: post}
+- {name: max-retiries-0, user_name: '0', headers: null, body: null, url: 'loocalhost:13080',
+  max_retries: 1, retry_interval: 10, method: post}
+- {name: max-retiries-201, user_name: '0', headers: null, body: null, url: 'loocalhost:13080',
+  max_retries: 200, retry_interval: 10, method: post}
+- {name: retry_interval_20, user_name: '0', headers: null, body: null, url: 'loocalhost:13080',
+  max_retries: 199, retry_interval: 20, method: post}

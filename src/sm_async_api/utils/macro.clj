@@ -46,3 +46,6 @@
 
 (defmacro remove-athorization [req]
   `(update-in ~req [:headers "authorization"] (constantly "XXXXXXXXXX")) )
+
+(defmacro if-do [ value condition func]
+  `(if (-> ~value  ~condition) (-> ~value  ~func) ~value))

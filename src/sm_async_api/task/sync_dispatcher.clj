@@ -78,17 +78,27 @@
                   (>!! in  fetch-marker))
               (if (zero? prefetch-marker-position)
                 (do
-                  (doseq [result result-set] (>!! out result))
+                  (doseq [result result-set]
+                    (debug id ":Task queued:" result)
+                    (>!! out result))
+                  (>!! out  fetch-marker))
+                #_(when-not (>
+                           (reduce (fn [pos result] 
+                                     (when (= pos prefetch-marker-position)
+                                                      (>!! out  fetch-marker))
+                                     (>!! out result)
+                                     (inc pos)) 0 result-set) prefetch-marker-position) 
                   (>!! out  fetch-marker))
                 (loop [result-set result-set
-                       pos 0]
-                  (let [f (first result-set)]
-                    (if (nil? f)
-                      (when-not (> pos prefetch-marker-position) (>!! out  fetch-marker))
-                      (do
-                        (>!! out f)
-                        (when (= pos prefetch-marker-position) (>!! out  fetch-marker))
-                        (recur (rest result-set) (inc pos)))))))))
+                         pos 0]
+                    (let [f (first result-set)]
+                      (if (nil? f)
+                        (when-not (> pos prefetch-marker-position) (>!! out  fetch-marker))
+                        (do
+                          (debug id ":Task queued:" f)
+                          (>!! out f)
+                          (when (= pos prefetch-marker-position) (>!! out  fetch-marker))
+                          (recur (rest result-set) (inc pos)))))))))
           (recur (<!! in))))
       (exit-reader id))))
 
@@ -137,7 +147,7 @@
                                        (<! local-channel))
                                    (pusher input id))
                           result-code  (sp/processor  result id)]
-                      (debug  id ":Task:"  (input :req_id) " channel" (get-channel-id local-channel) "->result" result "result code " result-code )
+                      (debug  id ":Task:"  (input :req_id) " channel" (get-channel-id local-channel) "->result" result "result code " result-code)
                       (_case  result-code
 
                               tr/NEXT-ACTION (recur (<! in) 0)

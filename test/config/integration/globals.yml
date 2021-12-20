@@ -1,0 +1,10 @@
+
+new-task-waiting: 2000
+
+max-retry-waiting: 15
+
+server-not-available-waiting: 10
+
+max-retry-count: 1
+
+attachment-copy-mode: fast

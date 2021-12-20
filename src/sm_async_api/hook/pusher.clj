@@ -67,7 +67,7 @@
 (defn message-sender-factory [async?]
   (let [delete-message (:delete @g/hook-action)
         log-message (:log-message-delivery @g/hook-action)
-        log-and-delete (if (nil? :log-message-delivery)
+        log-and-delete (if (nil? log-message)
                          (fn [input _ _] (delete-message (:id input)))
                          (fn [input status body]
                            (delete-message (:id input))

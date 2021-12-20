@@ -1,0 +1,19 @@
+dedicated-enabled: true
+dedicated:
+- name: max
+  threads: 2
+  chank-size: 10
+- name: test
+  threads: 1
+- name:
+  - dima
+  - vs
+  threads: 2
+  chank-size: 5
+global-enabled: true
+global-mode-user: masked
+global-login: eaist.integration
+global-threads: 2
+async-enabled: true
+async-login: max
+async-threads: 2

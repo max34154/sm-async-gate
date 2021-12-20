@@ -4,6 +4,7 @@
             [clojure.spec.alpha :as s]
             [sm_async_api.validate]
             [sm_async_api.config :as config]
+            [cheshire.core :as json]
             [sm_async_api.dal.globals :as g :refer [db]]
             [sm_async_api.utils.macro :refer [tod unixtime->timestamp remove-athorization]]
             [taoensso.timbre :as timbre
@@ -102,7 +103,7 @@
                        :execution_retries execution_retries
                        :retry_interval (if (number? retry_interval)  retry_interval g/_default_retry_interval)
                        :action (route-params :action_id)
-                       :parameters parameters
+                       :parameters (if (string? parameters) parameters (json/generate-string parameters))
                        :tag tag
                        :expire_at expire_at ;(if (nil? expire_at) "NULL" expire_at)
                        :service (name service)

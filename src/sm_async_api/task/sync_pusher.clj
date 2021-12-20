@@ -43,7 +43,9 @@
       
       (fn [action] (if (empty? (action :subject))
                      (str base-url  (action :service))
-                     (str base-url  (action :service) "/" (action :subject) "/" (action :action)))))))
+                     (if (empty? (action :action))
+                     (str base-url  (action :service) "/" (action :subject))
+                     (str base-url  (action :service) "/" (action :subject) "/action/" (action :action))))))))
 
 (defn method-builder-factory [mode get-allowed]
   (if (= mode :async-mode)

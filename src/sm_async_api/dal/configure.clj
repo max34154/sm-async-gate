@@ -19,11 +19,13 @@
             [sm_async_api.dal.hook :as dal-h]
             [sm_async_api.dal.attachment :as dal-a]
             [clojure.java.io :as io]
+            [sm_async_api.utils.macro :as m]
+            [clojure.stacktrace :as stacktrace]
             [taoensso.timbre :as timbre
              :refer [;log  trace  debug  info  warn  error  fatal  report
                      ;logf tracef debugf infof warnf errorf fatalf reportf
                      ;spy get-env
-                     debug  debugf warnf fatal report reportf errorf]]
+                     debug  debugf info warnf fatal report reportf errorf]]
             #_[taoensso.timbre.appenders.core :as appenders])
   (:import [java.io File]))
 
@@ -162,6 +164,46 @@
     (execute-script (db-setup db-config) :warn))
   (report "DB configured."))
 
+(def database-startup-commands {:-db-clean (fn  [{:keys [db-schema]},_]
+                                             (info "DB Clean - Started")
+                                             (execute-script (str "TRUNCATE TABLE " db-schema ".ATTACHMENT;"
+                                                                  "TRUNCATE TABLE " db-schema ".RESPONCE;"
+                                                                  "DELETE FROM " db-schema ".REQUEST;"
+                                                                  "TRUNCATE TABLE " db-schema ".HOOK;"
+                                                                  "TRUNCATE TABLE " db-schema ".MESSAGE;"
+                                                                  "TRUNCATE TABLE "  db-schema ".MESSAGE_LOG;"))
+                                             (info "DB Clean - Finished"))
+
+
+                                :-db-remove-requests (fn  [{:keys [db-schema]}, _]
+                                                       (info "DB Remove Request - Started")
+                                                       (execute-script (str "TRUNCATE TABLE " db-schema ".ATTACHMENT;"
+                                                                            "TRUNCATE TABLE " db-schema ".RESPONCE;"
+                                                                            "DELETE FROM " db-schema ".REQUEST;"))
+                                                       (info "DB Remove Request - Finished"))
+
+                                :-db-remove-messages (fn  [{:keys [db-schema]}, _]
+                                                       (info "DB Remove Messages - Started")
+                                                       (execute-script (str "TRUNCATE TABLE " db-schema " .MESSAGE;"))
+                                                       (info "DB Remove Messages - Finished"))
+
+                                :-db-remove-logs (fn  [{:keys [db-schema]}, _]
+                                                   (info "DB Remove Logs - Started")
+                                                   (execute-script (str "TRUNCATE TABLE " db-schema " .MESSAGE_LOG;"))
+                                                   (info "DB Remove Logs - Finished"))
+
+                                :-db-squeeze (fn  [_ db-clean-delay]
+                                               (info "DB Squeeze - Started")
+                                               (try  (->  (get db-clean-delay 0)
+                                                          #_{:clj-kondo/ignore [:invalid-arity]}
+                                                          (m/if-do vector? (get 0))
+                                                          (#(if (nil? %) 0 %))
+                                                          (m/if-do string? (Integer/parseInt 10))
+                                                          ((request-action :cleanup)))
+                                                     (info "DB Squeeze - finished")
+                                                     (catch NumberFormatException _ (warnf "Incorrect -squeeze delay value %s. Squeeze skiped" db-clean-delay))))})
+
+
 (defn reload-hook-templates
   ([db-config path] (reload-hook-templates db-config path false))
   ([db-config path force-reload?]
@@ -212,35 +254,48 @@
 
 (defn cleaner-stop [] (cleaner-reconfigure-period 0))
 
-(defn configure-database []
-  (let [db-config (:database @config/config)
-        path (:path  @config/config)]
-    (debug "Db config " db-config)
-    (try
-      (when (some? db-config)
-        (send db  (fn [_]  {:datasource (make-datasource (open-db db-config))}))
-        (when-not (await-for 10000 db) (throw (AssertionError. "Pool configuration error")))
-        (check_db db-config)
-        (send user-action (fn [_] (dal-u/configure db-config)))
-        (send task-action (fn [_] (dal-t/configure db-config)))
-        (send request-action (fn [_] (dal-r/configure db-config)))
-        (send hook-action (fn [_] (dal-h/configure db-config)))
-        (send attachment-action (fn [_] (dal-a/configure db-config)))
-        (when-not (await-for 10000 user-action task-action request-action hook-action attachment-action)
-          (throw (AssertionError. (str "DB functions configuration error "
-                                       "user action " @user-action
-                                       "task-action " @task-action
-                                       "request-action " @request-action
-                                       "hook-action " @hook-action))))
-        (when (pos-int? (db-config :db-clean-period))
-          (cleaner-start)))
-      ((@task-action :clear-locks))
-      (reload-hook-templates db-config path)
-      (catch Exception e (ex-message e)
-             (fatal "Database configuration error " e)
-             (println "!!!!!Stack trace:")
-             (clojure.stacktrace/print-stack-trace e)
-             -1))))
+
+(defn- run-option-fabric [db-config]
+  (fn [ret-val option]
+    (when (= ret-val -1) (reduced -1))
+    (when-let [option-func (database-startup-commands (key option))]
+      (option-func db-config (val option)))))
+
+(defn configure-database
+  ([]
+   (let [db-config (:database @config/config)
+         path (:path  @config/config)]
+     (debug "Db config " db-config)
+     (try
+       (when (some? db-config)
+         (send db  (fn [_]  {:datasource (make-datasource (open-db db-config))}))
+         (when-not (await-for 10000 db) (throw (AssertionError. "Pool configuration error")))
+         (check_db db-config)
+         (send user-action (fn [_] (dal-u/configure db-config)))
+         (send task-action (fn [_] (dal-t/configure db-config)))
+         (send request-action (fn [_] (dal-r/configure db-config)))
+         (send hook-action (fn [_] (dal-h/configure db-config)))
+         (send attachment-action (fn [_] (dal-a/configure db-config)))
+         (when-not (await-for 10000 user-action task-action request-action hook-action attachment-action)
+           (throw (AssertionError. (str "DB functions configuration error "
+                                        "user action " @user-action
+                                        "task-action " @task-action
+                                        "request-action " @request-action
+                                        "hook-action " @hook-action))))
+         (when (some? (:log-message-delivery @hook-action)) (info "Web-hook message logging enabled."))
+         (when (pos-int? (db-config :db-clean-period))
+           (cleaner-start)))
+       ((@task-action :clear-locks))
+       (reload-hook-templates db-config path)
+       (catch Exception e (ex-message e)
+              (fatal "Database configuration error " e)
+              (println "!!!!!Stack trace:")
+              (clojure.stacktrace/print-stack-trace e)
+              -1))))
+  ([options]
+   (reduce (run-option-fabric (:database @config/config)) (configure-database) options)))
+
+
 
 (defn stop-database []
   (let [db-config (:database @config/config)

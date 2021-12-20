@@ -1,6 +1,6 @@
 (ns sm_async_api.dal.task
   (:require [clojure.java.jdbc :as jdbc]
-            [clojure.string :as str]
+            ;[clojure.string :as str]
              ;[taoensso.timbre.appenders.core :as appenders]
             [sm_async_api.validate]
             [sm_async_api.config :as config]
@@ -264,6 +264,7 @@
   [db-config]
   (let [lock-sql  (lock-tasks-on-time-sql db-config)
         get-sql (get-tasks-on-time-sql db-config)]
+    ;(timbre/debug "!!! - -- Get task sql " get-sql)
     (fn [^String pusher-id ^Integer chunk_size ^String condition]
       (let [lock-time (unixtime->timestamp (tod))]
         (jdbc/with-db-transaction [t-con @db]

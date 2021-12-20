@@ -11,10 +11,11 @@
    [sm_async_api.dal.user :as dal-u]
    [sm_async_api.dal.globals :as dal-g]
    [sm_async_api.session :as session]
-   [sm_async_api.dal.configure :refer [execute-script]]
+   ;[sm_async_api.dal.configure :refer [execute-script]]
    [sm-async-api.task.sm_fake_resp :as SM]
    [sm_async_api.utils.base64 :refer [string->b64]]
    [taoensso.timbre :as timbre]
+   [clojure.java.io]
    [sm-async-api.hook-test :as hook_test]
    [sm_async_api.utils.reflector :refer [relector-set-responce
                                          reflector-start
@@ -41,12 +42,14 @@
 (def headers_png {"content-type"  "image/png"
                   "content-disposition" "attachment;filename=obsluzhivanie.png"})
 
-(defn- post-file [rec-id file-name content-type]
+(defn post-file 
+  ([rec-id file-name content-type] (post-file rec-id file-name content-type basic-auth))
+  ([rec-id file-name content-type auth]
   @(http/post (str action-url "Action/" rec-id "/attachments")
-              {:basic-auth basic-auth
+              {:basic-auth auth
                :headers {"content-type"  content-type
                          "content-disposition" (str "attachment;filename=" file-name)}
-               :body  (clojure.java.io/file file-name)}))
+               :body  (clojure.java.io/file file-name)})))
 
 
 (def request-body
@@ -119,16 +122,18 @@
      :rec-id (:rec_id (json/parse-string body keyword))
      :tag (when (= (action 2) :has-hook) true)}))
 
-(defn get-action [action]
+(defn get-action 
+  ([action] (get-action action basic-auth))
+  ([action auth]
   (let [{:keys [status body]} @(http/get (str action-url "Action/" (:rec-id action) "/result")
-                                         {:basic-auth basic-auth})
+                                         {:basic-auth auth})
         {:keys [res_status result]} (json/parse-string body keyword)]
-    (assoc action :status status :result result :res-status res_status :body body)))
+    (assoc action :status status :result result :res-status res_status :body body))))
 
 (defn get-res-status [result]
   (try
     (:res_status (json/parse-string (:body result) keyword))
-    (catch Exception e (println "incorrect body " (:body result))  nil)))
+    (catch Exception _ (println "incorrect body " (:body result))  nil)))
 
 
 (defn get-message-delivery-status [id]
@@ -175,12 +180,12 @@
         (let [{:keys [status]}
               (post-file @rec_id "MP900216006.JPG" "image/jpg")]
           (is (= 200 status)))))
-        (testing (str "Phase 2.2: post second file into" @rec_id)
-          (if (nil? @rec_id)
-            (is false)
-            (let [{:keys [status]}
-                  (post-file @rec_id "obsluzhivanie.png" "image/png")]
-              (is (= 200 status)))))
+    (testing (str "Phase 2.2: post second file into" @rec_id)
+      (if (nil? @rec_id)
+        (is false)
+        (let [{:keys [status]}
+              (post-file @rec_id "obsluzhivanie.png" "image/png")]
+          (is (= 200 status)))))
     (testing (str "Phase 3: run action " @rec_id)
       (if (nil? @rec_id)
         (is false)
@@ -268,14 +273,16 @@
 
 (defn fix-test-core [t]
   (timbre/set-level! :debug)
-  (startup  3000 "test/config/run/")
-  (execute-script "TRUNCATE TABLE ASYNC.ATTACHMENT;TRUNCATE TABLE ASYNC.RESPONCE;DELETE FROM ASYNC.REQUEST;")
-  (execute-script "TRUNCATE TABLE ASYNC.HOOK;")
-  (execute-script "TRUNCATE TABLE ASYNC.MESSAGE_LOG;")
+  ;(startup  3000 "test/config/run/")
+  (startup  {:-port 3000 :-path "test/config/run/" :-db-clean true })
+  ;(execute-script "TRUNCATE TABLE ASYNC.ATTACHMENT;TRUNCATE TABLE ASYNC.RESPONCE;DELETE FROM ASYNC.REQUEST;")
+  ;(execute-script "TRUNCATE TABLE ASYNC.HOOK;")
+  ;(execute-script "TRUNCATE TABLE ASYNC.MESSAGE_LOG;")
+  (reflector-start)
   ((@dal-g/hook-action :add-template) (update-in hook_test/hook-parametric [:url] hook_test/set-url))
   ((@dal-g/hook-action :add-template) (update-in hook_test/hook-standart [:url] hook_test/set-url))
   ;(redef-delete-hook-action)
-  (reflector-start)
+
   (swap! sm_async_api.config/config update-in [:config :auth-url] (fn [_] "http://212.11.152.7:13080/SM/9/rest/asyncuser"))
   (with-redefs [dal-u/update-user (delay update-user)
                 dal-u/get-user (delay get-user)

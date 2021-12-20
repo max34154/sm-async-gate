@@ -10,7 +10,7 @@
             [sm_async_api.config :as config]
             ;[sm_async_api.dal.configure :refer [configure-database]]
             [sm_async_api.dal.globals :refer [hook-action]]
-            [sm_async_api.utils.reflector :refer [relector-set-responce
+            [sm_async_api.utils.reflector :refer [;relector-set-responce
                                                   reflector-start
                                                   reflector-stop]]
             [clojure.test :refer :all]
@@ -314,13 +314,13 @@
         (is (= 200 status))
         (when (= 200 status)
           (testing "Hook preview"
-            (let    [{:keys [status body]}
+            (let    [res
                      @(http/get (str action-url "Hook/" (:name hook-parametric) "/preview")
                                 {:basic-auth basic-auth
                                  :headers headers
                                  :body preview-request-body})]
               ;(println "BOOODY " body)
-              (is (= 200 status))))
+              (is (= 200 (:status res)))))
           (testing "Hook testrun"
             (reflector-start)
             ;(Thread/sleep 50000)
@@ -336,7 +336,8 @@
             (reflector-stop)))))))
 
 (defn fix-test-core [t]
-  (startup  3000 "test/config/run/")
+  ;(startup  3000 "test/config/run/")
+  (startup  {:-port "3000" :-path "test/config/run/"})
   (swap! sm_async_api.config/config update-in [:config :auth-url] (fn [_] "http://212.11.152.7:13080/SM/9/rest/asyncuser"))
   (t)
   (shutdown))

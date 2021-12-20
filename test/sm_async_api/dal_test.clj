@@ -12,7 +12,10 @@
    [sm_async_api.dal.globals :as g :refer [task-action
                                            request-action
                                            hook-action]]
+   ;[sm_async_api.session :as session]
+   [sm_async_api.utils.macro :refer [tod-seconds]]
    [sm_async_api.dal.hook :as dal-h]
+   [sm_async_api.dal.user :as dal-u]
    [sm-async-api.hook.hook :as hook])
   #_{:clj-kondo/ignore [:unused-import]}
   (:import [java.sql SQLException SQLIntegrityConstraintViolationException BatchUpdateException]))
@@ -31,23 +34,22 @@
 ;; !! Due to this problem is not possible to test both DB at once 
 ;; !! REPL must be restarted between therpasses.
 #_(def configs [;{:db-type "h2", :path "test/", :test_data (slurp "test/sm_async_api/test_data_h2.sql")}
-              {:db-type "postgres", :path "test/config/postgres/", :test_data (slurp "test/sm_async_api/test_data_pg.sql")}
-              ])
+                {:db-type "postgres", :path "test/config/postgres/", :test_data (slurp "test/sm_async_api/test_data_pg.sql")}])
 
 #_(defn fix-test-db [t]
-  (doseq [db configs]
-    (binding [*test_data* (:test_data db)
-              *db-type* (:db-type db)]
-      
-      (config/configure (:path db))
-      (println "Run for dbtype " *db-type* " with config " (:path db))
-      (configure-database)
-      (t))))
+    (doseq [db configs]
+      (binding [*test_data* (:test_data db)
+                *db-type* (:db-type db)]
+
+        (config/configure (:path db))
+        (println "Run for dbtype " *db-type* " with config " (:path db))
+        (configure-database)
+        (t))))
 
 (defn fix-test-db [t]
-     (config/configure "test/config/run/")
-      (configure-database)
-      (t))
+  (config/configure "test/config/run/")
+  (configure-database)
+  (t))
 
 (defn fix-test-data  [t]
   (execute-script "TRUNCATE TABLE ASYNC.ATTACHMENT; TRUNCATE TABLE ASYNC.MESSAGE; TRUNCATE TABLE ASYNC.HOOK; TRUNCATE TABLE ASYNC.RESPONCE;DELETE FROM ASYNC.REQUEST;")
@@ -91,8 +93,8 @@
                       (post-task-result  (:req_id (first ((@task-action :get-worker-results)  test_user)))
                                          "{\"Result Code\": 0}")))
         #_(is (thrown? SQLIntegrityConstraintViolationException
-                     (post-task-result  (:req_id (first ((@task-action :get-worker-results)  test_user)))
-                                        "{\"Result Code\": 0}")))))))
+                       (post-task-result  (:req_id (first ((@task-action :get-worker-results)  test_user)))
+                                          "{\"Result Code\": 0}")))))))
 
 (defn check_reschedule  [prev_req_id prev-att  prev-next_run prev-retry_interval]
   ((@task-action :reschedule) prev_req_id)
@@ -335,3 +337,16 @@
         ((@hook-action :delete-expired) 0)
         (is (= 0 ((@hook-action :get-message-queue-length))))))))
 
+(deftest test-user-operations
+  (testing "Add new user "
+    (do
+      (@dal-u/update-user  {:name "new-user"
+                            :password "his-password"
+                            :expire_at  (tod-seconds)})
+      (let [result (:val (@dal-u/get-user "new-user"))]
+        (is (= "new-user" (result :name)))
+        (is (= "his-password" (result :password)))
+        (is (some? (result :password))))))
+  (testing "Delete user"
+    (do (@dal-u/delete-user "new-user")
+        (is (nil? (@dal-u/get-user "new-user"))))))

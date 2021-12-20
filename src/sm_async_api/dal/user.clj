@@ -47,8 +47,8 @@
        " WHERE name=?"))
 
 (defmethod insert-user-sql "postgres" [db-config]
-  (str "INSERT " (:db-schema db-config) ".USER(name, password, toc, expire_at) "
-       " VALUES(?,?,?, ?::TIMESAMPT )"))
+  (str "INSERT INTO " (:db-schema db-config) ".USER(name, password, toc, expire_at) "
+       " VALUES(?,?,?, ?::TIMESTAMP )"))
 ;; Postgesql methods END
 
 
@@ -62,7 +62,8 @@
                     :expire_at expire_at}})
 
 (defn update-user-factory [db-config]
-  (let [sql (update-user-sql db-config)]
+  (let [update-sql (update-user-sql db-config)
+        insert-sql (insert-user-sql db-config)]
     (fn [row]
       (jdbc/with-db-transaction [t-con @db]
         (let [{:keys [name password toc expire_at]} (encrypt-row row)
@@ -71,9 +72,9 @@
                                                  expire_at
                                                  (+ (tod-seconds)
                                                     default-session-length))))
-              result (jdbc/execute! t-con [sql password toc expire_at name])]
+              result (jdbc/execute! t-con [update-sql password toc expire_at name])]
           (if (zero? (first result))
-            (jdbc/execute! t-con [sql name password toc expire_at])
+            (jdbc/execute! t-con [insert-sql name password toc expire_at])
             result))))))
 
 #_(defn update-user-factory [^String db-schema ^String db-type]

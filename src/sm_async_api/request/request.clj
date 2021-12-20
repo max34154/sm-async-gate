@@ -11,7 +11,7 @@
                [taoensso.timbre :as timbre
                 :refer [;log  trace  spy  info  warn  error  fatal  report
            ;logf tracef debugf infof warnf errorf fatalf reportf get-env
-                        debug  error]]
+                        debug  error info]]
                [sm_async_api.session :as session]
                [sm_async_api.dal.request :as dal-r]
                [sm_async_api.dal.attachment :as dal-a]
@@ -187,10 +187,10 @@
                      (if (str/includes? content-type  "multipart/form-data")
                        (insert-multypart-attachment req)
                        (insert-attachment req)))))}
-        
+
         (catch  SQLIntegrityConstraintViolationException e  (error (ex-message e))
                 (http-errors/validation-error-406
-                 (str "Action " (-> req :route-params :action_id) " does not exist.")))   
+                 (str "Action " (-> req :route-params :action_id) " does not exist.")))
         (catch  BatchUpdateException e  (error (ex-message e))
                 (http-errors/validation-error-406
                  (str "Action " (-> req :route-params :action_id) " does not exist.")))
@@ -236,29 +236,36 @@
   (conj [[(str (get rdesc :name) "/") :name "/" :action_id]]
         (if (get rdesc :acl) {:post (post-action-acl-factory)} {:post (post-action-factory)})))
 
+(defn build-smstyle-route [rdesc]
+  (conj [[(str (get rdesc :name) "/") :name "/action/" :action_id]]
+        (if (get rdesc :acl) {:post (post-action-acl-factory)} {:post (post-action-factory)})))
+
 (defn debug-print-request [req]
   (println "Debug - " req)
   http-errors/ok-200)
 
 (defn routes [collections]
   (vector "/"
-          (into {["Action/" :action_id] {:get (get-action-factory)}
-                 ["Action/" :action_id "/result"] {:get (get-action-result-factory)}
-                 ["Action/" :action_id "/cancel"] {:put (cancel-action-factory)}
-                 ["Action/" :action_id "/attachments"]  (attachments-factory)
-                 ["Action/" :action_id "/run"] {:post (run-action-factory)}
-                 ["Action/" :action_id "/" :attachment_id] {:get (get-attachment-factory)}
-                 ["Debug/"] debug-print-request
+          (into
+           (into {["Action/" :action_id] {:get (get-action-factory)}
+                  ["Action/" :action_id "/result"] {:get (get-action-result-factory)}
+                  ["Action/" :action_id "/cancel"] {:put (cancel-action-factory)}
+                  ["Action/" :action_id "/attachments"]  (attachments-factory)
+                  ["Action/" :action_id "/run"] {:post (run-action-factory)}
+                  ["Action/" :action_id "/" :attachment_id] {:get (get-attachment-factory)}
+                  ["Debug/"] debug-print-request
                  ;["Hook"] {:put (hook/update-or-insert-hook-factory)}
-                 ["Hook"] {:put (hook/update-or-insert-hook-factory)}
-                 ["Hook/" :action_id] (hook/hook-factory)
-                 ["Hook/" :action_id "/preview"] (hook/test-hook-factory :preview)
-                 ["Hook/" :action_id "/testrun"] (hook/test-hook-factory :test-run)
-                 ["HookList/"] {:get (hook/get-all-hooks-factory)}
-                 }
+                  ["Hook"] {:put (hook/update-or-insert-hook-factory)}
+                  ["Hook/" :action_id] (hook/hook-factory)
+                  ["Hook/" :action_id "/preview"] (hook/test-hook-factory :preview)
+                  ["Hook/" :action_id "/testrun"] (hook/test-hook-factory :test-run)
+                  ["HookList/"] {:get (hook/get-all-hooks-factory)}}
 
-                (for [route  collections] ;(get cconfig/config :collections)
-                  (build_route route)))))
+                 (for [route  collections]
+                   (build_route route)))
+
+           (for [route  collections]
+             (build-smstyle-route route)))))
 
 (defn app []  (-> (routes (config/get-config :collections))
                   (make-handler)
@@ -272,7 +279,12 @@
 
 (defn start-AccessHTTPServer
   ([] (start-AccessHTTPServer "8080"))
-  ([port] (reset! AccesHTTPServer (httpkit/run-server (app) {:port port}))))
+  ([port] (->> (httpkit/run-server (app) {:port port})
+               (reset! AccesHTTPServer)
+               ((fn [app] (if (nil? app)
+                            (error "Gatekeeper failed to start on port " port)
+                            (info "Gatekeeper started on port " port))
+                  app)))))
 
 (defn stop-AccesHTTPServer
   " Graceful shutdown access server: wait 100ms for existing requests to be finished

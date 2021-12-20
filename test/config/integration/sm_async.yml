@@ -1,7 +1,7 @@
-module_ip: localhost:13080
+module_ip: 212.11.152.7:13080
 login: max
 async-gateway-id: 1AEF
-async-gateway-port: 300
+async-gateway-port: 3000
 collections:
 - name: FOSeaist
   acl: true

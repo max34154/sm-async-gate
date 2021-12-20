@@ -11,6 +11,10 @@ collections:
   acl: false
   keylist:
   - InteractionID
+- name: interactions
+  acl: false
+  keylist:
+  - CallID
 max-attachment-size: 20000000
 max-total-att-size: 0
 mime-types:
